@@ -23,19 +23,19 @@ Piyasa Analizi ve Trend Raporları: Yapay zeka modeli, geçmiş transfer veriler
 
 Proje Kategorisi:
 
-    Mobil Uygulama
+-Mobil Uygulama
 
 Grup Adı:
 
-    MİOMA
+-MİOMA
 
 Ekip Üyeleri:
 
-    Mehmet Orhan
+1. Mehmet Orhan
 
-    Mustafa Alican Kutsal
+2. Mustafa Alican Kutsal
 
-    İbrahim Mert Bozdoğan
+3. İbrahim Mert Bozdoğan
 
 Referans Uygulama:
 
