@@ -42,4 +42,5 @@ Açıklama: Kullanıcının daha önce favori listesine eklediği bir takımı f
 
 8️⃣ Transfer Tahmini Oluşturma
 API Metodu: POST /ai/transfer-predictions
+
 Açıklama: Yapay zekâ modeli, oyuncu performans verileri, sözleşme süresi ve piyasa trendlerini analiz ederek olası transfer tahmini oluşturur. Sonuçta tahmini kulüp ve gerçekleşme olasılığı sunulur.
