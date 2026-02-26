@@ -63,6 +63,7 @@ Bu (Transfera şablon) repoyu yerel bilgisayarınıza klonlayın:
 
 Bash
   git clone https://github.com/rhnMehmet/Transfera.git
+  
 
 Adım 2: Kendi Reponuza Ekleme
 
