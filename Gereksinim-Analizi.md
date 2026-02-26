@@ -124,6 +124,6 @@ Tüm Gereksinimler
 24. Trend Analizi (Mehmet Orhan)
 
 Gereksinim Dağılımları
-1. [İbrahim Mert Bozdoğan Gereksinimler](./İbrahim Mert Bozdoğan/İbrahim Mert Bozdoğan-Gereksinimler.md)
-2. [Mehmet Orhan Gereksinimler](./Mehmet Orhan/Mehmet Orhan-Gereksinimler.md)
-3. [Mustafa Alican KUTSAL](./Mustafa Alican KUTSAL/Mustafa Alican KUTSAL-Gereksinimler.md)
+1. [İbrahim Mert Bozdoğan Gereksinimler](./İbrahim%20Mert%20Bozdoğan/İbrahim-Mert-Bozdoğan-Gereksinimler.md)
+2. [Mehmet Orhan Gereksinimler](./Mehmet%20Orhan/Mehmet-Orhan-Gereksinimler.md)
+3. [Mustafa Alican KUTSAL](./Mustafa%20Alican%20KUTSAL/Mustafa-Alican-Kutsal-Gereksinimler.md)
