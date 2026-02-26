@@ -55,20 +55,3 @@ Klasör Yapısı
 5. [Mobil Backend](MobilBackEnd.md)
 6. [Video Sunum](Sunum.md)
 
-Kendi Reponuzu Oluşturma ve Şablonu Ekleme (Grup Lideri veya Seçilen Üye)
-
-Adım 1: Bu Şablon Repoyu Klonlama
-
-Bu (Transfera şablon) repoyu yerel bilgisayarınıza klonlayın:
-
-```
-git clone https://github.com/rhnMehmet/Transfera.git
-```
-  
-
-Adım 2: Kendi Reponuza Ekleme
-
-1. Kendi reponuzu da git clone ile çekerek Yazmuh şablonunu içine ekleyin.
-2. Böylece şablon projenin tüm içeriği kendi reponuza kopyalanmış olur.
-3. Grup lideri ya da seçilen üye şablon eklenmiş repoyu push etmeli ve diğer grup üyelerinin erişimine açmalı.
-
