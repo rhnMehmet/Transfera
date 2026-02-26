@@ -55,12 +55,14 @@ Klasör Yapısı
 5. [Mobil Backend](MobilBackEnd.md)
 6. [Video Sunum](Sunum.md)
 
-Kendi Reponuzu Oluşturma ve Şablonu Ekleme
+Kendi Reponuzu Oluşturma ve Şablonu Ekleme (Grup Lideri veya Seçilen Üye)
+
 Adım 1: Bu Şablon Repoyu Klonlama
+
 Bu (Transfera şablon) repoyu yerel bilgisayarınıza klonlayın:
 
-Bash
-git clone https://github.com/rhnMehmet/Transfera.git
+
+  git clone https://github.com/rhnMehmet/Transfera.git
 
 Adım 2: Kendi Reponuza Ekleme
 
