@@ -2,6 +2,10 @@
 
 **OpenAPI Spesifikasyon Dosyası:** [transfera.yaml](transfera.yaml) 
 
+Bu doküman, OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış örnek bir API tasarımını içermektedir.
+
+## OpenAPI Specification
+
 ```yaml
 openapi: 3.0.3
 info:
