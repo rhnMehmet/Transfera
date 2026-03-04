@@ -1,8 +1,3 @@
-# API Tasarımı - OpenAPI Specification Örneği
-
-** OpenAPI Spesifikasyon Dosyası: [transfera.yaml](transfera.yaml)**
-
-```yaml
 openapi: 3.0.3
 info:
   title: Transfera API
@@ -13,8 +8,8 @@ info:
     tahmini, oyuncu değer tahmini ve transfer trend analizi uçları içerir.
     API JWT tabanlı kimlik doğrulama ile korunmaktadır.
   contact:
-    name: Mehmet Orhan
-    email: mehmetorhan2145@gmail.com
+    name: Transfera Team
+    email: example@transfera.app
 
 servers:
   - url: https://api.transfera.app
@@ -1014,14 +1009,14 @@ paths:
         - name: season
           in: query
           required: false
-          description: "Sezon (örn: 2025-2026)"
+          description: Sezon (örn: 2025-2026)
           schema:
             type: string
           example: "2025-2026"
         - name: league
           in: query
           required: false
-          description: "Lig bazlı analiz"
+          description: Lig bazlı analiz
           schema:
             type: string
           example: "Süper Lig"
@@ -1678,4 +1673,3 @@ components:
       required:
         - position
         - totalSpend
-``
