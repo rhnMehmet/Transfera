@@ -1,6 +1,6 @@
 # API Tasarımı - OpenAPI Specification Örneği
 
-** OpenAPI Spesifikasyon Dosyası:** [transfera.yaml](transfera.yaml) 
+**OpenAPI Spesifikasyon Dosyası:** [transfera.yaml](transfera.yaml) 
 
 ```yaml
 openapi: 3.0.3
