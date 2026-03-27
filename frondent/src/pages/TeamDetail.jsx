@@ -100,3 +100,4 @@ const TeamDetail = () => {
 };
 
 export default TeamDetail;
+console.log("deneme")

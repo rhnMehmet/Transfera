@@ -63,3 +63,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+console.log("deneme")

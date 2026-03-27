@@ -496,3 +496,4 @@ export default function FavoritesPage() {
     </div>
   );
 }
+console.log("deneme")

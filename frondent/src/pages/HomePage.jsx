@@ -334,3 +334,4 @@ useEffect(() => {
     </div>
   );
 }
+console.log("deneme")

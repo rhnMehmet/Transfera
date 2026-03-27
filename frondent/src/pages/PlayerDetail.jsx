@@ -139,3 +139,4 @@ const PlayerDetail = () => {
 };
 
 export default PlayerDetail;
+console.log("deneme")

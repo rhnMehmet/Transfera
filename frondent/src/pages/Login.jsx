@@ -38,3 +38,4 @@ export default function Login() {
     </div>
   );
 }
+console.log("deneme")
