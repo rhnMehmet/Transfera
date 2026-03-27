@@ -3,6 +3,7 @@ const footballService = require("../services/footballService");
 // GET /api/players
 exports.listPlayers = async (req, res) => {
   try {
+    // req ve res sadece bu fonksiyonun İÇİNDE tanımlıdır
     const { team, league, season, search, page } = req.query;
 
     const data = await footballService.getPlayers({
@@ -13,19 +14,20 @@ exports.listPlayers = async (req, res) => {
       page,
     });
 
-    console.log("PLAYERS RESPONSE:", JSON.stringify(data, null, 2));
+    // Sportmonks'tan gelen veriyi kontrol ediyoruz
+    // Eğer veri 'data' veya 'veri' anahtarıyla geliyorsa onu döndür
+    const finalData = data.data || data.veri || data;
 
     res.status(200).json({
       success: true,
-      message: "Oyuncular başarıyla getirildi",
-      results: data.results,
-      paging: data.paging,
-      data: data.response,
+      message: "Oyuncular başariyla getirildi",
+      data: finalData,
     });
   } catch (error) {
+    console.error("Controller Hatasi:", error.message);
     res.status(500).json({
       success: false,
-      message: "Oyuncular alınamadı",
+      message: "Oyuncular alinamadi",
       error: error.message,
     });
   }
@@ -35,24 +37,14 @@ exports.listPlayers = async (req, res) => {
 exports.getPlayerDetail = async (req, res) => {
   try {
     const { playerId } = req.params;
-    const { season } = req.query;
-
-    const data = await footballService.getPlayers({
-      id: playerId,
-      season,
-    });
+    const data = await footballService.getPlayers({ id: playerId });
 
     res.status(200).json({
       success: true,
-      message: "Oyuncu detayı getirildi",
-      data: data.response,
+      data: data.data || data.veri || data,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Oyuncu detayı alınamadı",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -60,21 +52,13 @@ exports.getPlayerDetail = async (req, res) => {
 exports.getPlayerTransfers = async (req, res) => {
   try {
     const { playerId } = req.params;
-
-    const data = await footballService.getPlayerTransfers({
-      player: playerId,
-    });
+    const data = await footballService.getPlayerTransfers(playerId);
 
     res.status(200).json({
       success: true,
-      message: "Oyuncu transfer geçmişi getirildi",
-      data: data.response,
+      data: data.data || data.veri || data,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Oyuncu transfer geçmişi alınamadı",
-      error: error.response?.data || error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };

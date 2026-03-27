@@ -1,8 +1,12 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const teamController = require("../controllers/teamController");
 
+// /api/teams adresine gelen istekleri controller'a yönlendir
 router.get("/", teamController.listTeams);
-router.get("/:teamId", teamController.getTeamDetail);
-router.get("/:teamId/squad", teamController.getTeamSquad);
+
+module.exports = router;
+
+router.get("/:id", teamController.getTeamDetail); 
 
 module.exports = router;

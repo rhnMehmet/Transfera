@@ -1,74 +1,38 @@
 const footballService = require("../services/footballService");
 
-// GET /api/teams
 exports.listTeams = async (req, res) => {
   try {
-    const { league, season, country, search } = req.query;
-
-    const data = await footballService.getTeams({
-      league,
-      season,
-      country,
-      search,
-    });
+    const { search } = req.query;
+    // Az önce servis dosyasına eklediğimiz getTeams'i çağırıyoruz
+    const data = await footballService.getTeams({ search });
 
     res.status(200).json({
       success: true,
-      message: "Takımlar başarıyla getirildi",
-      results: data.results,
-      data: data.response,
+      data: data.data || data.veri || data
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Takımlar alınamadı",
-      error: error.message,
+    res.status(500).json({ 
+      success: false, 
+      message: "Takımlar getirilemedi",
+      error: error.message 
     });
   }
 };
 
-// GET /api/teams/:teamId
+
 exports.getTeamDetail = async (req, res) => {
   try {
-    const { teamId } = req.params;
-
-    const data = await footballService.getTeams({
-      id: teamId,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Takım detayı getirildi",
-      data: data.response,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Takım detayı alınamadı",
-      error: error.message,
-    });
-  }
-};
-
-// GET /api/teams/:teamId/squad
-exports.getTeamSquad = async (req, res) => {
-  try {
-    const { teamId } = req.params;
-
-    const data = await footballService.getTeamSquad({
-      team: teamId,
-    });
+    const { id } = req.params;
+    
+    // footballService içindeki getTeams fonksiyonuna ID gönderiyoruz
+    const data = await footballService.getTeams({ id }); 
 
     res.status(200).json({
       success: true,
-      message: "Takım kadrosu getirildi",
-      data: data.response,
+      data: data.data || data // Sportmonks veriyi bazen direkt bazen data içinde döner
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Takım kadrosu alınamadı",
-      error: error.message,
-    });
+    console.error("Takım Detay Getirme Hatası:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
