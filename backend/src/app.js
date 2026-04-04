@@ -27,7 +27,7 @@ const MONGODB_SERVER_SELECTION_TIMEOUT_MS = Number(
   process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000
 );
 
-app.use(
+app.use( 
   cors({
     origin(origin, callback) {
       if (!origin || !ALLOWED_ORIGINS.length || ALLOWED_ORIGINS.includes(origin)) {
