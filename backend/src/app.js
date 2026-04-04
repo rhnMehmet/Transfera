@@ -56,7 +56,8 @@ function buildHealthPayload() {
   };
 }
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  await connectToDatabase();
   res.json(buildHealthPayload());
 });
 
@@ -78,11 +79,12 @@ if (hasFrontendBuild) {
   });
 }
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   if (hasFrontendBuild) {
     return res.sendFile(path.join(frontendDistPath, "index.html"));
   }
 
+  await connectToDatabase();
   return res.json(buildHealthPayload());
 });
 
