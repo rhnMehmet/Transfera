@@ -53,7 +53,6 @@ Proje dokumantasyonuna asagidaki baglantilardan ulasabilirsiniz:
 5. [Mobil Front-End](MobilFrontEnd.md)
 6. [Mobil Backend](MobilBackEnd.md)
 7. [Video Sunum](Sunum.md)
-8. [Deploy Notlari](DEPLOY.md)
 
 ---
 
