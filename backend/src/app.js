@@ -31,6 +31,8 @@ const MONGODB_SERVER_SELECTION_TIMEOUT_MS = Number(
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 const hasFrontendBuild = fs.existsSync(frontendDistPath);
 
+let databaseConnectionPromise = null;
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -42,15 +44,20 @@ app.use(
     },
   })
 );
+
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
-  res.json({
+function buildHealthPayload() {
+  return {
     name: "TRANSFERA API",
     status: isDatabaseAvailable() ? "ok" : "degraded",
     version: "1.0.0",
     database: isDatabaseAvailable() ? "connected" : "disconnected",
-  });
+  };
+}
+
+app.get("/api/health", (req, res) => {
+  res.json(buildHealthPayload());
 });
 
 app.use("/users", userRoutes);
@@ -76,27 +83,33 @@ app.get("/", (req, res) => {
     return res.sendFile(path.join(frontendDistPath, "index.html"));
   }
 
-  return res.json({
-    name: "TRANSFERA API",
-    status: isDatabaseAvailable() ? "ok" : "degraded",
-    version: "1.0.0",
-    database: isDatabaseAvailable() ? "connected" : "disconnected",
-  });
+  return res.json(buildHealthPayload());
 });
 
 app.use((req, res) => {
-  res.status(404).json({ message: "Endpoint bulunamadı." });
+  res.status(404).json({ message: "Endpoint bulunamadi." });
 });
 
 async function connectToDatabase() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (databaseConnectionPromise) {
+    return databaseConnectionPromise;
+  }
+
   try {
-    await mongoose.connect(MONGODB_URI, {
+    databaseConnectionPromise = mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: MONGODB_SERVER_SELECTION_TIMEOUT_MS,
     });
-    console.log("MongoDB bağlandı.");
+
+    await databaseConnectionPromise;
+    console.log("MongoDB baglandi.");
   } catch (error) {
+    databaseConnectionPromise = null;
     console.error(
-      "MongoDB bağlantısı kurulamadı, sunucu sınırlı modda çalışıyor:",
+      "MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
       error.message
     );
   }
@@ -104,22 +117,28 @@ async function connectToDatabase() {
 
 async function startServer() {
   app.listen(PORT, () => {
-    console.log(`Server çalışıyor: http://localhost:${PORT}`);
+    console.log(`Server calisiyor: http://localhost:${PORT}`);
   });
 
   await connectToDatabase();
 }
 
 mongoose.connection.on("connected", () => {
-  console.log("MongoDB bağlantısı aktif.");
+  console.log("MongoDB baglantisi aktif.");
 });
 
 mongoose.connection.on("disconnected", () => {
-  console.warn("MongoDB bağlantısı kesildi. API sınırlı modda devam ediyor.");
+  console.warn("MongoDB baglantisi kesildi. API sinirli modda devam ediyor.");
 });
 
 mongoose.connection.on("error", (error) => {
-  console.error("MongoDB hatası:", error.message);
+  console.error("MongoDB hatasi:", error.message);
 });
 
-startServer();
+connectToDatabase();
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
