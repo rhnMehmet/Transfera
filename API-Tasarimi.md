@@ -1,23 +1,33 @@
+# API Tasarımı - OpenAPI Specification Örneği
+
+**OpenAPI Spesifikasyon Dosyası:** [lamine.yaml](lamine.yaml)
+
+Bu doküman, OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış örnek bir API tasarımını içermektedir.
+
+## OpenAPI Specification
+
+```
+
 openapi: 3.0.3
 info:
   title: Transfera API
   version: 1.0.0
   description: >
-    TRANSFERA – futbol oyuncularının transfer geçmişi, piyasa değeri, takım bilgileri,
-    kullanıcı favorileri ve yorum yönetimini sağlayan RESTful API.
-    Yapay zekâ (AI) destekli transfer uyum tahmini, oyuncu değer tahmini ve takım raporu uçları içerir.
+    TRANSFERA – futbol oyuncularının transfer geçmişi, piyasa değeri, takım bilgileri ve
+    kullanıcı favorileri yönetimini sağlayan RESTful API. Yapay zekâ (AI) destekli transfer
+    tahmini, oyuncu değer tahmini ve transfer trend analizi uçları içerir.
     API JWT tabanlı kimlik doğrulama ile korunmaktadır.
   contact:
-    name: Mehmet Orhan
-    email: mehmetorhan2145@gmail.com
+    name: Transfera Team
+    email: example@transfera.app
 
 servers:
   - url: https://api.transfera.app
-    description: Üretim sunucusu
+    description: Üretim sunucusu (Production)
   - url: https://staging-api.transfera.app
-    description: Test sunucusu
+    description: Test sunucusu (Staging)
   - url: https://localhost:3000
-    description: Yerel geliştirme sunucusu
+    description: Yerel geliştirme sunucusu (Development)
 
 tags:
   - name: Kullanıcılar
@@ -27,17 +37,13 @@ tags:
   - name: Takımlar
     description: Takım listeleme, detay ve kadro işlemleri
   - name: Transferler
-    description: Transfer listeleme işlemleri
+    description: Transfer listeleme ve yetkili güncelleme işlemleri
   - name: Favoriler
-    description: Kullanıcı favori takım ve oyuncu işlemleri
+    description: Kullanıcı favori takım/oyuncu ekleme ve silme işlemleri
   - name: Bildirimler
-    description: Kullanıcı bildirim tercihleri
+    description: Kullanıcı bildirim tercihlerini güncelleme
   - name: Yapay Zekâ
-    description: AI tabanlı transfer uyumu, oyuncu değeri ve takım raporu
-  - name: Yorumlar
-    description: Yorum ekleme, listeleme, güncelleme ve silme
-  - name: Admin
-    description: Yönetici işlemleri
+    description: AI tabanlı transfer tahmini, değer tahmini ve trend analizi
 
 security:
   - BearerAuth: []
@@ -49,7 +55,6 @@ paths:
         - Kullanıcılar
       summary: Kullanıcı Kaydı
       operationId: registerUser
-      security: []
       requestBody:
         required: true
         content:
@@ -82,7 +87,6 @@ paths:
         - Kullanıcılar
       summary: Kullanıcı Girişi
       operationId: loginUser
-      security: []
       requestBody:
         required: true
         content:
@@ -117,9 +121,9 @@ paths:
       operationId: logoutUser
       responses:
         "204":
-          description: Oturum sonlandırıldı
+          description: Oturum sonlandırıldı (token geçersiz hale getirildi)
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -130,7 +134,7 @@ paths:
       - name: id
         in: path
         required: true
-        description: Kullanıcı kimliği
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
@@ -142,19 +146,19 @@ paths:
       operationId: getUserProfile
       responses:
         "200":
-          description: Profil getirildi
+          description: Profil başarıyla getirildi
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Yetkisiz erişim
+          description: Yetkisiz erişim (başkasının profili)
           content:
             application/json:
               schema:
@@ -179,7 +183,7 @@ paths:
               $ref: "#/components/schemas/UserUpdateInput"
       responses:
         "200":
-          description: Profil güncellendi
+          description: Profil başarıyla güncellendi
           content:
             application/json:
               schema:
@@ -191,7 +195,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -216,9 +220,9 @@ paths:
       operationId: deleteUser
       responses:
         "204":
-          description: Hesap silindi
+          description: Hesap kalıcı olarak silindi
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -241,6 +245,7 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
@@ -258,7 +263,7 @@ paths:
               $ref: "#/components/schemas/PasswordChangeInput"
       responses:
         "204":
-          description: Şifre değiştirildi
+          description: Şifre başarıyla değiştirildi
         "400":
           description: Geçersiz istek verisi
           content:
@@ -266,13 +271,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Yetkisiz işlem
+          description: Yetkisiz işlem (başkasının şifresi)
           content:
             application/json:
               schema:
@@ -283,6 +288,7 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
@@ -312,13 +318,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "404":
-          description: Kullanıcı veya oyuncu bulunamadı
+          description: Oyuncu veya kullanıcı bulunamadı
           content:
             application/json:
               schema:
@@ -335,12 +341,14 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
       - name: playerId
         in: path
         required: true
+        description: Oyuncunun benzersiz kimlik numarası
         schema:
           type: string
         example: "ply789"
@@ -354,7 +362,7 @@ paths:
         "204":
           description: Favori oyuncu silindi
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -377,6 +385,7 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
@@ -406,7 +415,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -429,12 +438,14 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
       - name: teamId
         in: path
         required: true
+        description: Takımın benzersiz kimlik numarası
         schema:
           type: string
         example: "tm456"
@@ -448,7 +459,7 @@ paths:
         "204":
           description: Favori takım silindi
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -471,6 +482,7 @@ paths:
       - name: id
         in: path
         required: true
+        description: Kullanıcının benzersiz kimlik numarası
         schema:
           type: string
         example: "usr123"
@@ -500,7 +512,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -524,12 +536,11 @@ paths:
         - Oyuncular
       summary: Oyuncuları Listeleme
       operationId: listPlayers
-      security: []
       parameters:
         - name: q
           in: query
           required: false
-          description: Arama sorgusu
+          description: Arama sorgusu (isim/ülke/pozisyon vb.)
           schema:
             type: string
           example: "messi"
@@ -550,6 +561,7 @@ paths:
         - name: page
           in: query
           required: false
+          description: Sayfa numarası (varsayılan 1)
           schema:
             type: integer
             minimum: 1
@@ -558,6 +570,7 @@ paths:
         - name: limit
           in: query
           required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
           schema:
             type: integer
             minimum: 1
@@ -566,13 +579,13 @@ paths:
           example: 10
       responses:
         "200":
-          description: Oyuncular listelendi
+          description: Oyuncular başarıyla listelendi
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedPlayers"
         "400":
-          description: Geçersiz parametre
+          description: Geçersiz filtre/pagination parametreleri
           content:
             application/json:
               schema:
@@ -583,6 +596,7 @@ paths:
       - name: playerId
         in: path
         required: true
+        description: Oyuncunun benzersiz kimlik numarası
         schema:
           type: string
         example: "ply789"
@@ -592,10 +606,9 @@ paths:
         - Oyuncular
       summary: Oyuncu Detayı Görüntüleme
       operationId: getPlayer
-      security: []
       responses:
         "200":
-          description: Oyuncu detayı getirildi
+          description: Oyuncu detayı başarıyla getirildi
           content:
             application/json:
               schema:
@@ -612,6 +625,7 @@ paths:
       - name: playerId
         in: path
         required: true
+        description: Oyuncunun benzersiz kimlik numarası
         schema:
           type: string
         example: "ply789"
@@ -621,11 +635,11 @@ paths:
         - Oyuncular
       summary: Oyuncu Transfer Geçmişi
       operationId: listPlayerTransfers
-      security: []
       parameters:
         - name: page
           in: query
           required: false
+          description: Sayfa numarası (varsayılan 1)
           schema:
             type: integer
             minimum: 1
@@ -634,6 +648,7 @@ paths:
         - name: limit
           in: query
           required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
           schema:
             type: integer
             minimum: 1
@@ -643,6 +658,7 @@ paths:
         - name: order
           in: query
           required: false
+          description: Sıralama (asc/desc) - kronolojik
           schema:
             type: string
             enum: [asc, desc]
@@ -650,7 +666,7 @@ paths:
           example: desc
       responses:
         "200":
-          description: Transfer geçmişi listelendi
+          description: Oyuncu transfer geçmişi başarıyla listelendi
           content:
             application/json:
               schema:
@@ -667,6 +683,7 @@ paths:
       - name: playerId
         in: path
         required: true
+        description: Oyuncunun benzersiz kimlik numarası
         schema:
           type: string
         example: "ply789"
@@ -676,10 +693,9 @@ paths:
         - Oyuncular
       summary: Piyasa Değeri Görüntüleme
       operationId: getPlayerMarketValue
-      security: []
       responses:
         "200":
-          description: Oyuncunun mevcut piyasa değeri ve geçmiş değişimleri getirildi
+          description: Oyuncunun piyasa değeri ve geçmiş değişimleri getirildi
           content:
             application/json:
               schema:
@@ -697,23 +713,25 @@ paths:
         - Takımlar
       summary: Takımları Listeleme
       operationId: listTeams
-      security: []
       parameters:
         - name: league
           in: query
           required: false
+          description: Lig bazlı filtreleme
           schema:
             type: string
           example: "Süper Lig"
         - name: country
           in: query
           required: false
+          description: Ülke bazlı filtreleme
           schema:
             type: string
           example: "Türkiye"
         - name: page
           in: query
           required: false
+          description: Sayfa numarası (varsayılan 1)
           schema:
             type: integer
             minimum: 1
@@ -722,6 +740,7 @@ paths:
         - name: limit
           in: query
           required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
           schema:
             type: integer
             minimum: 1
@@ -730,13 +749,13 @@ paths:
           example: 10
       responses:
         "200":
-          description: Takımlar listelendi
+          description: Takımlar başarıyla listelendi
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedTeams"
         "400":
-          description: Geçersiz parametre
+          description: Geçersiz filtre/pagination parametreleri
           content:
             application/json:
               schema:
@@ -747,6 +766,7 @@ paths:
       - name: teamId
         in: path
         required: true
+        description: Takımın benzersiz kimlik numarası
         schema:
           type: string
         example: "tm456"
@@ -756,7 +776,6 @@ paths:
         - Takımlar
       summary: Takım Detayı Görüntüleme
       operationId: getTeam
-      security: []
       responses:
         "200":
           description: Takım detayı getirildi
@@ -776,6 +795,7 @@ paths:
       - name: teamId
         in: path
         required: true
+        description: Takımın benzersiz kimlik numarası
         schema:
           type: string
         example: "tm456"
@@ -785,10 +805,9 @@ paths:
         - Takımlar
       summary: Takım Kadrosu Görüntüleme
       operationId: getTeamSquad
-      security: []
       responses:
         "200":
-          description: Takımın güncel oyuncu listesi getirildi
+          description: Takımın güncel kadrosu listelendi
           content:
             application/json:
               schema:
@@ -806,23 +825,25 @@ paths:
         - Transferler
       summary: Transferleri Listeleme
       operationId: listTransfers
-      security: []
       parameters:
         - name: fromClubId
           in: query
           required: false
+          description: Çıkış kulübüne göre filtreleme
           schema:
             type: string
           example: "tm001"
         - name: toClubId
           in: query
           required: false
+          description: Varış kulübüne göre filtreleme
           schema:
             type: string
           example: "tm456"
         - name: startDate
           in: query
           required: false
+          description: Başlangıç tarihi (YYYY-MM-DD)
           schema:
             type: string
             format: date
@@ -830,6 +851,7 @@ paths:
         - name: endDate
           in: query
           required: false
+          description: Bitiş tarihi (YYYY-MM-DD)
           schema:
             type: string
             format: date
@@ -837,6 +859,7 @@ paths:
         - name: page
           in: query
           required: false
+          description: Sayfa numarası (varsayılan 1)
           schema:
             type: integer
             minimum: 1
@@ -845,6 +868,7 @@ paths:
         - name: limit
           in: query
           required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
           schema:
             type: integer
             minimum: 1
@@ -853,45 +877,46 @@ paths:
           example: 10
       responses:
         "200":
-          description: Transferler listelendi
+          description: Transferler başarıyla listelendi
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedTransfers"
         "400":
-          description: Geçersiz parametre
+          description: Geçersiz filtre/pagination parametreleri
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /admin/users/{id}:
+  /transfers/{transferId}:
     parameters:
-      - name: id
+      - name: transferId
         in: path
         required: true
+        description: Transferin benzersiz kimlik numarası
         schema:
           type: string
-        example: "usr123"
+        example: "trf999"
 
     put:
       tags:
-        - Admin
-      summary: Admin Paneli Kullanıcı Güncelleme
-      operationId: adminUpdateUser
+        - Transferler
+      summary: Yetkili Transfer Güncelleme
+      operationId: updateTransfer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AdminUserUpdateInput"
+              $ref: "#/components/schemas/TransferUpdateInput"
       responses:
         "200":
-          description: Kullanıcı admin tarafından güncellendi
+          description: Transfer başarıyla güncellendi
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserProfile"
+                $ref: "#/components/schemas/Transfer"
         "400":
           description: Geçersiz istek verisi
           content:
@@ -899,43 +924,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Sadece admin erişebilir
+          description: Sadece yetkili kullanıcılar güncelleyebilir (rol bazlı kontrol)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "404":
-          description: Kullanıcı bulunamadı
+          description: Transfer bulunamadı
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /ai/transfer-fit-predictions:
+  /ai/transfer-predictions:
     post:
       tags:
         - Yapay Zekâ
-      summary: AI Transfer Uyum Tahmini Oluşturma
-      operationId: createTransferFitPrediction
+      summary: Transfer Tahmini Oluşturma (AI)
+      operationId: createTransferPrediction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TransferFitPredictionInput"
+              $ref: "#/components/schemas/TransferPredictionInput"
       responses:
         "201":
-          description: Transfer uyum tahmini oluşturuldu
+          description: Transfer tahmini üretildi
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TransferFitPrediction"
+                $ref: "#/components/schemas/TransferPrediction"
         "400":
           description: Geçersiz istek verisi
           content:
@@ -943,7 +968,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Kimlik doğrulama başarısız
+          description: Kimlik doğrulama başarısız (token eksik veya geçersiz)
           content:
             application/json:
               schema:
@@ -960,6 +985,7 @@ paths:
       - name: playerId
         in: path
         required: true
+        description: Oyuncunun benzersiz kimlik numarası
         schema:
           type: string
         example: "ply789"
@@ -967,12 +993,11 @@ paths:
     get:
       tags:
         - Yapay Zekâ
-      summary: Oyuncu Değer Tahmini
+      summary: Oyuncu Değer Tahmini (AI)
       operationId: predictPlayerValue
-      security: []
       responses:
         "200":
-          description: Oyuncunun gelecekteki tahmini piyasa değeri hesaplandı
+          description: AI tahmini piyasa değeri hesaplandı
           content:
             application/json:
               schema:
@@ -984,198 +1009,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /ai/team-reports/{teamId}:
-    parameters:
-      - name: teamId
-        in: path
-        required: true
-        schema:
-          type: string
-        example: "tm456"
-
+  /ai/transfer-trends:
     get:
       tags:
         - Yapay Zekâ
-      summary: AI Takım Raporu
-      operationId: getTeamReport
-      security: []
-      responses:
-        "200":
-          description: Takım performans ve taktik analiz raporu getirildi
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TeamReport"
-        "404":
-          description: Takım bulunamadı
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /comments:
-    post:
-      tags:
-        - Yorumlar
-      summary: Yorum Ekleme
-      operationId: createComment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CommentCreateInput"
-      responses:
-        "201":
-          description: Yorum eklendi
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Comment"
-        "400":
-          description: Geçersiz istek verisi
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Kimlik doğrulama başarısız
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    get:
-      tags:
-        - Yorumlar
-      summary: Yorum Listeleme
-      operationId: listComments
-      security: []
+      summary: Transfer Trend Analizi (AI)
+      operationId: getTransferTrends
       parameters:
-        - name: targetType
+        - name: season
           in: query
           required: false
+          description: Sezon (örn: 2025-2026)
           schema:
             type: string
-            enum: [player, team, transfer]
-          example: "player"
-        - name: targetId
+          example: "2025-2026"
+        - name: league
           in: query
           required: false
+          description: Lig bazlı analiz
           schema:
             type: string
-          example: "ply789"
-        - name: userId
-          in: query
-          required: false
-          schema:
-            type: string
-          example: "usr123"
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          example: 1
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 10
-          example: 10
+          example: "Süper Lig"
       responses:
         "200":
-          description: Yorumlar listelendi
+          description: Trend analizi raporu üretildi
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedComments"
+                $ref: "#/components/schemas/TransferTrendsReport"
         "400":
-          description: Geçersiz parametre
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /comments/{commentId}:
-    parameters:
-      - name: commentId
-        in: path
-        required: true
-        schema:
-          type: string
-        example: "cmt001"
-
-    put:
-      tags:
-        - Yorumlar
-      summary: Yorum Güncelleme
-      operationId: updateComment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CommentUpdateInput"
-      responses:
-        "200":
-          description: Yorum güncellendi
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Comment"
-        "400":
-          description: Geçersiz istek verisi
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Kimlik doğrulama başarısız
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Sadece yorum sahibi güncelleyebilir
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Yorum bulunamadı
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    delete:
-      tags:
-        - Yorumlar
-      summary: Yorum Silme
-      operationId: deleteComment
-      responses:
-        "204":
-          description: Yorum silindi
-        "401":
-          description: Kimlik doğrulama başarısız
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Sadece yorum sahibi veya admin silebilir
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Yorum bulunamadı
+          description: Geçersiz parametreler
           content:
             application/json:
               schema:
@@ -1184,55 +1047,58 @@ paths:
 components:
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT tabanlı kimlik doğrulama
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'JWT tabanlı kimlik doğrulama. İstek başlığına "Authorization: Bearer <token>" eklenmeli.'
 
   schemas:
     Error:
       type: object
-      description: Standart hata yanıtı
+      description: Hata durumlarında döndürülen standart hata yanıtı
       properties:
         message:
           type: string
+          description: Hatayı açıklayan mesaj
           example: "Geçersiz istek"
       required:
         - message
 
     User:
       type: object
+      description: Kullanıcı modelini temsil eder
       properties:
         _id:
           type: string
+          description: Kullanıcının benzersiz kimlik numarası
           example: "usr123"
         firstName:
           type: string
+          description: Ad
           example: "Mehmet"
         lastName:
           type: string
+          description: Soyad
           example: "Orhan"
         email:
           type: string
           format: email
+          description: E-posta
           example: "mehmet@example.com"
-        role:
-          type: string
-          enum: [user, admin]
-          example: "user"
         createdOn:
           type: string
           format: date-time
+          description: Oluşturulma tarihi
           example: "2026-03-04T10:00:00Z"
       required:
         - _id
         - firstName
         - lastName
         - email
-        - role
 
     UserProfile:
       type: object
+      description: Profil görüntüleme/güncelleme için döndürülen kullanıcı profili
       properties:
         _id:
           type: string
@@ -1247,10 +1113,6 @@ components:
           type: string
           format: email
           example: "mehmet@example.com"
-        role:
-          type: string
-          enum: [user, admin]
-          example: "user"
         favoriteTeams:
           type: array
           items:
@@ -1268,10 +1130,10 @@ components:
         - firstName
         - lastName
         - email
-        - role
 
     UserRegisterInput:
       type: object
+      description: Kullanıcı kaydı için istek gövdesi
       properties:
         firstName:
           type: string
@@ -1300,6 +1162,7 @@ components:
 
     UserLoginInput:
       type: object
+      description: Kullanıcı girişi için istek gövdesi
       properties:
         email:
           type: string
@@ -1315,9 +1178,11 @@ components:
 
     AuthResponse:
       type: object
+      description: Başarılı giriş yanıtı (JWT)
       properties:
         token:
           type: string
+          description: JWT erişim tokenı
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         user:
           $ref: "#/components/schemas/User"
@@ -1327,6 +1192,7 @@ components:
 
     UserUpdateInput:
       type: object
+      description: Profil güncelleme için istek gövdesi
       properties:
         firstName:
           type: string
@@ -1345,6 +1211,7 @@ components:
 
     PasswordChangeInput:
       type: object
+      description: Şifre değiştirme isteği
       properties:
         currentPassword:
           type: string
@@ -1359,29 +1226,9 @@ components:
         - currentPassword
         - newPassword
 
-    AdminUserUpdateInput:
-      type: object
-      properties:
-        firstName:
-          type: string
-          example: "Mehmet"
-        lastName:
-          type: string
-          example: "Orhan"
-        email:
-          type: string
-          format: email
-          example: "mehmet@example.com"
-        role:
-          type: string
-          enum: [user, admin]
-          example: "admin"
-        isActive:
-          type: boolean
-          example: true
-
     FavoritePlayerAddInput:
       type: object
+      description: Favori oyuncu ekleme isteği
       properties:
         playerId:
           type: string
@@ -1391,6 +1238,7 @@ components:
 
     FavoriteTeamAddInput:
       type: object
+      description: Favori takım ekleme isteği
       properties:
         teamId:
           type: string
@@ -1400,6 +1248,7 @@ components:
 
     Favorites:
       type: object
+      description: Kullanıcının favori listeleri
       properties:
         userId:
           type: string
@@ -1421,15 +1270,19 @@ components:
 
     NotificationPreferences:
       type: object
+      description: Bildirim tercihleri
       properties:
         transferNotifications:
           type: boolean
+          description: Transfer bildirimleri açık/kapalı
           example: true
         matchNotifications:
           type: boolean
+          description: Maç bildirimleri açık/kapalı
           example: false
         emailNotifications:
           type: boolean
+          description: E-posta bildirimleri
           example: true
       required:
         - transferNotifications
@@ -1438,6 +1291,7 @@ components:
 
     NotificationPreferencesInput:
       type: object
+      description: Bildirim tercihleri güncelleme isteği
       properties:
         transferNotifications:
           type: boolean
@@ -1451,6 +1305,7 @@ components:
 
     Player:
       type: object
+      description: Oyuncu modelini temsil eder
       properties:
         _id:
           type: string
@@ -1464,16 +1319,11 @@ components:
           example: 24
         position:
           type: string
+          description: Pozisyon kısaltması (GK/DF/MF/FW vb.)
           example: "FW"
-        nationality:
-          type: string
-          example: "Türkiye"
         teamId:
           type: string
           example: "tm456"
-        teamName:
-          type: string
-          example: "Konyaspor"
         stats:
           $ref: "#/components/schemas/PlayerStats"
         marketValue:
@@ -1486,6 +1336,7 @@ components:
 
     PlayerStats:
       type: object
+      description: Oyuncu istatistikleri
       properties:
         appearances:
           type: integer
@@ -1502,6 +1353,7 @@ components:
 
     Team:
       type: object
+      description: Takım modelini temsil eder
       properties:
         _id:
           type: string
@@ -1517,6 +1369,7 @@ components:
           example: "Süper Lig"
         standing:
           type: integer
+          description: Lig sıralaması
           example: 6
         recentTransfers:
           type: array
@@ -1525,29 +1378,25 @@ components:
       required:
         - _id
         - name
-        - country
-        - league
 
     TeamSquad:
       type: object
+      description: Takım kadrosu
       properties:
         teamId:
           type: string
           example: "tm456"
-        teamName:
-          type: string
-          example: "Konyaspor"
         players:
           type: array
           items:
             $ref: "#/components/schemas/Player"
       required:
         - teamId
-        - teamName
         - players
 
     Transfer:
       type: object
+      description: Transfer modelini temsil eder
       properties:
         _id:
           type: string
@@ -1555,21 +1404,12 @@ components:
         playerId:
           type: string
           example: "ply789"
-        playerName:
-          type: string
-          example: "Ahmet Yılmaz"
         fromClubId:
           type: string
           example: "tm001"
-        fromClubName:
-          type: string
-          example: "Galatasaray"
         toClubId:
           type: string
           example: "tm456"
-        toClubName:
-          type: string
-          example: "Konyaspor"
         fee:
           $ref: "#/components/schemas/Money"
         date:
@@ -1583,8 +1423,26 @@ components:
         - toClubId
         - date
 
+    TransferUpdateInput:
+      type: object
+      description: Yetkili transfer güncelleme isteği
+      properties:
+        fromClubId:
+          type: string
+          example: "tm001"
+        toClubId:
+          type: string
+          example: "tm456"
+        fee:
+          $ref: "#/components/schemas/Money"
+        date:
+          type: string
+          format: date
+          example: "2026-01-15"
+
     Money:
       type: object
+      description: Para formatı
       properties:
         amount:
           type: number
@@ -1599,6 +1457,7 @@ components:
 
     PaginatedPlayers:
       type: object
+      description: Sayfalı oyuncu liste yanıtı
       properties:
         page:
           type: integer
@@ -1621,6 +1480,7 @@ components:
 
     PaginatedTeams:
       type: object
+      description: Sayfalı takım liste yanıtı
       properties:
         page:
           type: integer
@@ -1643,6 +1503,7 @@ components:
 
     PaginatedTransfers:
       type: object
+      description: Sayfalı transfer liste yanıtı
       properties:
         page:
           type: integer
@@ -1665,6 +1526,7 @@ components:
 
     MarketValueResponse:
       type: object
+      description: Oyuncu piyasa değeri ve geçmişi
       properties:
         playerId:
           type: string
@@ -1673,6 +1535,7 @@ components:
           $ref: "#/components/schemas/Money"
         history:
           type: array
+          description: Tarihsel piyasa değeri değişimleri
           items:
             $ref: "#/components/schemas/MarketValuePoint"
       required:
@@ -1693,59 +1556,77 @@ components:
         - date
         - value
 
-    TransferFitPredictionInput:
+    TransferPredictionInput:
       type: object
+      description: AI transfer tahmini için istek gövdesi
       properties:
         playerId:
           type: string
           example: "ply789"
-        teamId:
-          type: string
-          example: "tm456"
-        includeTacticalAnalysis:
-          type: boolean
-          example: true
+        context:
+          type: object
+          description: Modelin kullanacağı ek bağlam (performans, sözleşme, trend vb.)
+          properties:
+            contractMonthsLeft:
+              type: integer
+              example: 10
+            recentFormScore:
+              type: number
+              format: float
+              example: 7.8
+            preferredLeagues:
+              type: array
+              items:
+                type: string
+              example: ["Premier League", "La Liga"]
       required:
         - playerId
-        - teamId
 
-    TransferFitPrediction:
+    TransferPrediction:
       type: object
+      description: AI transfer tahmini sonucu
       properties:
         predictionId:
           type: string
-          example: "fit001"
+          example: "pred001"
         playerId:
           type: string
           example: "ply789"
-        teamId:
-          type: string
-          example: "tm456"
-        fitScore:
-          type: number
-          format: float
-          example: 0.87
-        tacticalFit:
-          type: string
-          example: "Yüksek"
-        analysis:
-          type: string
-          example: "Oyuncunun oyun stili takımın geçiş hücumu yapısına uygundur."
+        likelyDestinations:
+          type: array
+          description: Olası hedef kulüpler (olasılıklarla)
+          items:
+            $ref: "#/components/schemas/LikelyDestination"
         generatedOn:
           type: string
           format: date-time
-          example: "2026-04-04T14:00:00Z"
+          example: "2026-03-04T12:00:00Z"
       required:
         - predictionId
         - playerId
-        - teamId
-        - fitScore
-        - tacticalFit
-        - analysis
+        - likelyDestinations
         - generatedOn
+
+    LikelyDestination:
+      type: object
+      properties:
+        teamId:
+          type: string
+          example: "tm777"
+        probability:
+          type: number
+          format: float
+          description: 0-1 arası olasılık
+          example: 0.42
+        expectedFee:
+          $ref: "#/components/schemas/Money"
+      required:
+        - teamId
+        - probability
 
     PlayerValuePrediction:
       type: object
+      description: AI oyuncu piyasa değeri tahmin sonucu
       properties:
         playerId:
           type: string
@@ -1754,144 +1635,53 @@ components:
           $ref: "#/components/schemas/Money"
         horizonMonths:
           type: integer
+          description: Tahmin ufku (ay)
           example: 12
         factors:
           type: array
+          description: Tahmine etki eden özet faktörler
           items:
             type: string
-          example:
-            - "Performans artışı"
-            - "Yaş faktörü"
-            - "Lig seviyesi"
+          example: ["Performans artışı", "Yaş faktörü", "Lig seviyesi"]
       required:
         - playerId
         - predictedValue
         - horizonMonths
-        - factors
 
-    TeamReport:
+    TransferTrendsReport:
       type: object
+      description: AI transfer trend analizi raporu
       properties:
-        teamId:
+        season:
           type: string
-          example: "tm456"
-        performanceScore:
-          type: number
-          format: float
-          example: 78.5
-        tacticalSummary:
+          example: "2025-2026"
+        league:
           type: string
-          example: "Takım yüksek pres ve hızlı geçiş oyunu oynuyor."
-        strengths:
+          example: "Süper Lig"
+        insights:
           type: array
           items:
             type: string
           example:
-            - "Kanat organizasyonları güçlü"
-            - "Geçiş hücumları etkili"
-        weaknesses:
+            - "Forvet transferlerinde ücret ortalaması yükseldi."
+            - "Genç oyuncu transferlerinde artış gözlendi."
+        topPositionsBySpend:
           type: array
           items:
-            type: string
-          example:
-            - "Savunma arkası koşulara açık"
-            - "Duran top savunması zayıf"
-        generatedOn:
-          type: string
-          format: date-time
-          example: "2026-04-04T14:20:00Z"
+            $ref: "#/components/schemas/PositionSpend"
       required:
-        - teamId
-        - performanceScore
-        - tacticalSummary
-        - strengths
-        - weaknesses
-        - generatedOn
+        - insights
 
-    Comment:
+    PositionSpend:
       type: object
       properties:
-        _id:
+        position:
           type: string
-          example: "cmt001"
-        userId:
-          type: string
-          example: "usr123"
-        targetType:
-          type: string
-          enum: [player, team, transfer]
-          example: "player"
-        targetId:
-          type: string
-          example: "ply789"
-        content:
-          type: string
-          example: "Bu oyuncu takım için çok uygun görünüyor."
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-04-04T15:00:00Z"
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2026-04-04T15:10:00Z"
+          example: "FW"
+        totalSpend:
+          $ref: "#/components/schemas/Money"
       required:
-        - _id
-        - userId
-        - targetType
-        - targetId
-        - content
-        - createdAt
+        - position
+        - totalSpend
 
-    CommentCreateInput:
-      type: object
-      properties:
-        targetType:
-          type: string
-          enum: [player, team, transfer]
-          example: "player"
-        targetId:
-          type: string
-          example: "ply789"
-        content:
-          type: string
-          minLength: 1
-          maxLength: 1000
-          example: "Bu oyuncu takım için çok uygun."
-      required:
-        - targetType
-        - targetId
-        - content
-
-    CommentUpdateInput:
-      type: object
-      properties:
-        content:
-          type: string
-          minLength: 1
-          maxLength: 1000
-          example: "Yorumu güncelledim."
-      required:
-        - content
-
-    PaginatedComments:
-      type: object
-      properties:
-        page:
-          type: integer
-          example: 1
-        limit:
-          type: integer
-          example: 10
-        total:
-          type: integer
-          example: 250
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/Comment"
-      required:
-        - page
-        - limit
-        - total
-        - items
+```
