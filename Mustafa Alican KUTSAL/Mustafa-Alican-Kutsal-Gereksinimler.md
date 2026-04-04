@@ -1,60 +1,53 @@
-1️⃣ Profil Güncelleme 
+1️⃣ Profil Güncelleme
 
-API Metodu: PUT /users/{id} 
+API Metodu: PUT /users/{id}
 
-Açıklama: Kullanıcının profil bilgilerinde değişiklik yapmasını sağlar. Güncellenen bilgiler doğrulanarak veritabanına kaydedilir. 
+Açıklama: Kullanıcının ad, soyad, e-posta ve profil bilgilerini güncellemesini sağlar. Girilen bilgiler doğrulanarak sistemdeki mevcut kullanıcı verileri güvenli şekilde güncellenir.
 
+2️⃣ Şifre Değiştirme
 
+API Metodu: PUT /users/{id}/password
 
-2️⃣ Şifre Değiştirme 
+Açıklama: Kullanıcının mevcut şifresini doğruladıktan sonra yeni bir şifre belirlemesini sağlar. Yeni şifre güvenlik standartlarına uygun biçimde hashlenerek veritabanında saklanır.
 
-API Metodu: PUT /users/{id}/password 
+3️⃣ Favori Oyuncu Ekleme
 
-Açıklama: Kullanıcının mevcut şifresini doğrulayarak yeni şifre belirlemesini sağlar. Yeni şifre güvenli şekilde hashlenerek saklanır. 
+API Metodu: POST /users/{id}/favorites/players
 
+Açıklama: Kullanıcının ilgilendiği oyuncuları favori oyuncular listesine eklemesini sağlar. Aynı oyuncunun birden fazla kez eklenmesi sistem tarafından engellenir.
 
+4️⃣ Takımları Listeleme
 
-3️⃣ Favori Oyuncu Ekleme 
+API Metodu: GET /teams
 
-API Metodu: POST /users/{id}/favorites/players 
+Açıklama: Sistem içerisinde kayıtlı olan tüm futbol takımlarını liste halinde getirir. İsteğe bağlı olarak lig, ülke veya sezon bazlı filtreleme yapılabilir.
 
-Açıklama: Kullanıcının ilgilendiği oyuncuları favori listesine eklemesini sağlar. Aynı oyuncunun tekrar eklenmesi engellenir. 
+5️⃣ Takım Detayı Görüntüleme
 
+API Metodu: GET /teams/{teamId}
 
+Açıklama: Seçilen takımın kadro bilgileri, teknik ekip, lig sıralaması ve takım istatistikleri gibi detaylı bilgilerin görüntülenmesini sağlar.
 
-4️⃣ Takımları Listeleme 
+6️⃣ Favori Oyuncu Silme
 
-API Metodu: GET /teams 
+API Metodu: DELETE /users/{id}/favorites/players/{playerId}
 
-Açıklama: Sistemde bulunan tüm takımların liste halinde getirilmesini sağlar. Lig veya ülke bazlı filtreleme yapılabilir. 
+Açıklama: Kullanıcının daha önce favorilere eklediği bir oyuncuyu favori listesinden kaldırmasını sağlar. İşlem sırasında kullanıcı kimlik doğrulaması yapılır ve yalnızca ilgili kullanıcı kendi favori listesinden silme işlemi gerçekleştirebilir.
 
+7️⃣ Oyuncu Transfer Geçmişi
 
+API Metodu: GET /players/{playerId}/transfers
 
-5️⃣ Takım Detayı Görüntüleme 
+Açıklama: Seçilen oyuncunun kariyeri boyunca gerçekleştirdiği transferleri, transfer tarihlerini ve bonservis bedellerini kronolojik sırayla listeler.
 
-API Metodu: GET /teams/{teamId} 
+8️⃣ Oyuncu Değer Tahmini
 
-Açıklama: Seçilen takımın kadro bilgileri, lig durumu ve transfer geçmişi gibi detaylarını görüntüler. 
+API Metodu: GET /ai/player-value/{playerId}
 
- 
+Açıklama: Yapay zekâ destekli analiz sistemi; oyuncunun performans istatistikleri, yaşı ve kariyer verilerini inceleyerek gelecekteki tahmini piyasa değerini hesaplar.
 
-6️⃣ Favori Oyuncu Silme 
-API Metodu: DELETE /users/{id}/favorites/players/{playerId} 
+9️⃣ Yorum Güncelleme
 
-Açıklama: Kullanıcının daha önce favori listesine eklediği bir oyuncuyu favorilerden kaldırmasını sağlar. İşlem öncesinde kullanıcı kimlik doğrulaması yapılır ve sadece ilgili kullanıcı kendi favori listesinden silme işlemi gerçekleştirebilir. Silme işlemi başarılı olduğunda ilgili oyuncu kullanıcının favori listesinden çıkarılır.Şekil 
+API Metodu: PUT /comments/{commentId}
 
- 
-
-7️⃣ Oyuncu Transfer Geçmişi 
-
-API Metodu: GET /players/{playerId}/transfers 
-
-Açıklama: Oyuncunun geçmiş yıllardaki transfer hareketlerini ve bonservis bedellerini kronolojik sırayla gösterir. 
-
-
-
-8️⃣ Oyuncu Değer Tahmini 
-
-API Metodu: GET /ai/player-value/{playerId} 
-
-Açıklama: Yapay zekâ algoritması, oyuncunun performans istatistikleri ve yaş faktörünü analiz ederek gelecekteki tahmini piyasa değerini hesaplar. 
+Açıklama: Kullanıcının daha önce yaptığı yorumu düzenlemesini sağlar. Güncellenen yorum içeriği doğrulandıktan sonra sistemdeki mevcut yorum verisi güncellenir ve değişiklikler anında yansıtılır.
