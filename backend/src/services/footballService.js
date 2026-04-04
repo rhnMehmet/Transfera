@@ -93,7 +93,7 @@ async function requestTransferFeed(page = 1) {
       return await request("/transfers", { include, page });
     } catch (error) {
       lastError = error;
-      if (error.response?.status !== 400) {
+      if (error.response?.status !== 400)  {
         throw error;
       }
     }

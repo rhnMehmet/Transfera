@@ -33,7 +33,7 @@ const hasFrontendBuild = fs.existsSync(frontendDistPath);
 
 let databaseConnectionPromise = null;
 
-app.use(
+app.use( 
   cors({
     origin(origin, callback) {
       if (!origin || !ALLOWED_ORIGINS.length || ALLOWED_ORIGINS.includes(origin)) {

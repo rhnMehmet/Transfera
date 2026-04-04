@@ -7,7 +7,7 @@ const LEAGUE_PROFILES = {
     discipline: 71,
     finishing: 76,
     youthTrust: 66,
-    summary: "Yuksek tempo, fiziksel temas ve gecis oyunu agirlikli.",
+    summary: "Yuksek tempo, fiziksel temas ve  gecis oyunu agirlikli.",
   },
   "la liga": {
     name: "La Liga",
