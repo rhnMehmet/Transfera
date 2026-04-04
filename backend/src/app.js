@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -26,6 +28,8 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
 const MONGODB_SERVER_SELECTION_TIMEOUT_MS = Number(
   process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000
 );
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+const hasFrontendBuild = fs.existsSync(frontendDistPath);
 
 app.use(
   cors({
@@ -40,7 +44,7 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
     name: "TRANSFERA API",
     status: isDatabaseAvailable() ? "ok" : "degraded",
@@ -58,6 +62,27 @@ app.use("/admin", adminRoutes);
 app.use("/api/players", commentRoutes);
 app.use("/api/teams", commentRoutes);
 app.use("/api/comments", commentRoutes);
+
+if (hasFrontendBuild) {
+  app.use(express.static(frontendDistPath));
+
+  app.get(/^\/(?!users|players|teams|transfers|ai|admin|api)(.*)$/, (req, res) => {
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
+
+app.get("/", (req, res) => {
+  if (hasFrontendBuild) {
+    return res.sendFile(path.join(frontendDistPath, "index.html"));
+  }
+
+  return res.json({
+    name: "TRANSFERA API",
+    status: isDatabaseAvailable() ? "ok" : "degraded",
+    version: "1.0.0",
+    database: isDatabaseAvailable() ? "connected" : "disconnected",
+  });
+});
 
 app.use((req, res) => {
   res.status(404).json({ message: "Endpoint bulunamadı." });
