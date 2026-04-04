@@ -1,39 +1,50 @@
-1️⃣ Kullanıcı Çıkışı
-API Metodu: POST /users/logout
 
-Açıklama: Kullanıcının mevcut oturumunu sonlandırır. Aktif token veya oturum geçersiz hale getirilir.
-________________________________________
-2️⃣ Hesap Silme
-API Metodu: DELETE /users/{id}
+1. Kullanıcı Çıkışı
 
-Açıklama: Kullanıcının hesabının kalıcı olarak sistemden silinmesini sağlar. Silme işlemi geri alınamaz.
-________________________________________
-3️⃣ Favori Takım Ekleme
-API Metodu: POST /users/{id}/favorites/teams
+API: POST /users/logout
+Kullanıcının sistemdeki aktif oturumunu sonlandırmak için kullanılır. Bu işlemden sonra kullanıcı tekrar giriş yapmadan korumalı işlemlere erişemez.
 
-Açıklama: Kullanıcının ilgilendiği takımları favori listesine eklemesini sağlar.
-________________________________________
-4️⃣ Bildirim Tercihlerini Güncelleme
-API Metodu: PUT /users/{id}/notifications
+2. Hesap Silme
 
-Açıklama: Kullanıcının transfer veya maç bildirimlerini açıp kapatmasını sağlar.
-________________________________________
-5️⃣ Piyasa Değeri Görüntüleme
-API Metodu: GET /players/{playerId}/market-value
+API: DELETE /users/{id}
+Belirtilen kullanıcı hesabını sistemden kalıcı olarak siler. İşlem sırasında yetkilendirme kontrolü yapılır ve kullanıcı yalnızca kendi hesabını silebilir.
 
-Açıklama: Oyuncunun mevcut piyasa değerini ve değer değişim geçmişini gösterir.
-________________________________________
-6️⃣ Yetkili Transfer Güncelleme
-API Metodu: PUT /transfers/{transferId}
+3. Favori Takım Ekleme
 
-Açıklama: Yetkili kullanıcıların transfer bilgilerini güncellemesini sağlar. Rol bazlı yetkilendirme kontrolü yapılır.
-________________________________________
-7️⃣ Takım Kadrosu Görüntüleme
-API Metodu: GET /teams/{teamId}/squad
+API: POST /users/{id}/favorites/teams
+Kullanıcının favori takımlar listesine yeni bir takım eklemesini sağlar. Böylece kullanıcı ilgilendiği takımları takip edebilir ve sistem bu tercihlere göre içerik sunabilir.
 
-Açıklama: Takıma ait güncel oyuncu listesini detaylı şekilde sunar.
-________________________________________
-8️⃣ Trend Analizi
-API Metodu: GET /ai/transfer-trends
-Açıklama: Yapay zekâ modeli, geçmiş transfer verilerini analiz ederek transfer piyasasındaki genel eğilimleri, yükselen ligleri ve değer artış trendlerini raporlar.
+4. Bildirim Tercihlerini Güncelleme
 
+API: PUT /users/{id}/notifications
+Kullanıcının almak istediği bildirim türlerini belirlemesini sağlar. Kullanıcı, bildirim ayarlarını değiştirerek uygulama deneyimini kişiselleştirebilir.
+
+5. Piyasa Değeri Görüntüleme
+
+API: GET /players/{playerId}/market-value
+Belirli bir oyuncunun güncel piyasa değerini gösterir. Bu değer, oyuncunun transfer potansiyelini ve ekonomik durumunu ifade eder.
+
+6. Admin Paneli
+
+API: GET /admin/users
+Sistemdeki tüm kullanıcıların listelenmesini sağlar. Bu endpoint yalnızca yönetici yetkisine sahip kullanıcılar tarafından erişilebilir ve sistem yönetimi amacıyla kullanılır.
+
+7. Takım Kadrosu Görüntüleme
+
+API: GET /teams/{teamId}/squad
+Belirli bir takıma ait oyuncuların listesini sunar. Kullanıcılar takımın kadro yapısını ve oyuncu bilgilerini inceleyebilir.
+
+8. AI Takım Raporu
+
+API: GET /ai/team-report/{teamId}
+Yapay zekâ tarafından oluşturulan takım analizini sunar. Bu rapor, takımın performansı ile güçlü ve zayıf yönleri hakkında genel değerlendirme içerir.
+
+9. Yorum Silme
+
+API: DELETE /api/comments/{commentId}
+Belirli bir yorumu sistemden silmek için kullanılır. Bu işlem yalnızca yorumu yapan kullanıcı veya admin tarafından gerçekleştirilebilir.
+
+10. Yorum Listeleme
+
+API: GET /api/comments
+Sistemde bulunan yorumları listelemek için kullanılır. Gerekirse belirli içeriklere göre filtreleme yapılarak ilgili yorumlar görüntülenebilir.

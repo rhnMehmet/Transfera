@@ -1,57 +1,66 @@
 # Transfera
 
-## 🔗 Proje Hakkında
+![Transfera Urun Gorseli](product.png)
 
-![TRANSFERA Ürün Görseli](product.png)
+## Proje Hakkinda
 
-TRANSFERA
-🔗 Proje Hakkında
-Proje Tanımı: TRANSFERA – Yapay Zeka Destekli Yeni Nesil Transfer Platformu
+Transfera, futbol transfer sureclerini veri odakli analizlerle destekleyen yapay zeka tabanli bir platformdur. Uygulama; oyuncu transfer gecmisi, piyasa degeri projeksiyonu, hedef lig veya takim uyumu ve topluluk yorumlari gibi ozellikleri tek panelde bir araya getirir.
 
-Proje Amacı
-TRANSFERA, futbol dünyasındaki transfer süreçlerini ve oyuncu değerlemelerini bir adım öteye taşıyan, veri bilimi tabanlı kapsamlı bir analiz platformudur. Kullanıcılara oyuncuların geçmiş transfer verilerini sunarken, gücünü yapay zekadan alan tahminleme modelleriyle fark yaratır.
+### Temel Ozellikler
 
-Platformun sunduğu temel değerler şunlardır:
+- Transfer gecmisi ve oyuncu detaylarini listeleme
+- Yapay zeka destekli piyasa degeri projeksiyonu
+- Hedef lig veya takim uyum analizi
+- Favoriler, profil ve topluluk yorumlari
+- Admin ve kullanici yonetimi
 
-Kapsamlı Transfer Takibi: Oyuncuların tüm transfer geçmişi, transfer bedelleri ve hangi kulüplere geçiş yaptıkları detaylı bir şekilde listelenir.
+### Referans Uygulama
 
-Yapay Zeka ile Piyasa Değeri Tahmini: Gelişmiş yapay zeka algoritmaları; oyuncuların performans istatistiklerini ve yaş faktörünü analiz ederek gelecekteki tahmini piyasa değerini hesaplar.
+- [Transfermarkt](https://www.transfermarkt.com.tr/)
 
-Olası Transfer Senaryoları: Modelimiz; oyuncu performans verilerini, sözleşme sürelerini ve piyasa trendlerini analiz ederek olası transfer tahminleri oluşturur. Sonuç olarak tahmini yeni kulüp ve transferin gerçekleşme olasılığı sunulur.
+---
 
-Piyasa Analizi ve Trend Raporları: Yapay zeka modeli, geçmiş transfer verilerini analiz ederek transfer piyasasındaki genel eğilimleri, yükselen ligleri ve değer artış trendlerini raporlar.
+## Proje Linkleri
 
-Proje Kategorisi:
+- [GitHub Adresi](https://github.com/rhnMehmet/Transfera)
+- [REST API Adresi](https://transfera-backend.vercel.app/api/health)
+- [Web Frontend Adresi](https://transfera-frontend.vercel.app)
 
--Mobil Uygulama
+---
 
-Grup Adı:
+## Proje Ekibi
 
--MİOMA
+**Grup Adi:**
 
-Ekip Üyeleri:
+MIOMA
 
-1. Mehmet Orhan
+**Ekip Uyeleri:**
 
-2. Mustafa Alican Kutsal
+- Mehmet Orhan
+- Mustafa Alican Kutsal
+- Ibrahim Mert Bozdogan
 
-3. İbrahim Mert Bozdoğan
+---
 
-Referans Uygulama:
+## Dokumantasyon
 
-[Transfermarkt](https://www.transfermarkt.com.tr/)
-
-Proje Linkleri
-GitHub Adresi: https://github.com/rhnMehmet/Transfera
-
-REST API Adresi:
-
-Klasör Yapısı
+Proje dokumantasyonuna asagidaki baglantilardan ulasabilirsiniz:
 
 1. [Gereksinim Analizi](Gereksinim-Analizi.md)
-2. [REST API Tasarımı](API-Tasarimi.md)
+2. [REST API Tasarimi](API-Tasarimi.md)
 3. [REST API](Rest-API.md)
-4. [Mobil Front-End](MobilFrontEnd.md)
-5. [Mobil Backend](MobilBackEnd.md)
-6. [Video Sunum](Sunum.md)
+4. [Web Front-End](WebFrontEnd.md)
+5. [Mobil Front-End](MobilFrontEnd.md)
+6. [Mobil Backend](MobilBackEnd.md)
+7. [Video Sunum](Sunum.md)
 
+---
+
+## Yayin Bilgisi
+
+Proje Vercel uzerinde iki ayri servis olarak yayinlanmistir:
+
+- Frontend: `transfera-frontend`
+- Backend: `transfera-backend`
+
+Veritabani olarak MongoDB Atlas kullanilmaktadir.

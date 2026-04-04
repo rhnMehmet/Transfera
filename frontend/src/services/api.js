@@ -2,8 +2,7 @@ import axios from "axios";
 
 const TOKEN_KEY = "transfera_token";
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || "";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
