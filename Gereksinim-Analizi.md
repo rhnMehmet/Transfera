@@ -11,7 +11,7 @@ API: POST /users/login
 E-posta ve şifre doğrulanır. Başarılı girişte JWT veya oturum anahtarı üretilir.
 
 3. Profil Görüntüleme
-
+ 
 API: GET /users/{id}
 Kullanıcı kendi profil bilgilerini görüntüleyebilir. Yetkilendirme kontrolü yapılır.
 
