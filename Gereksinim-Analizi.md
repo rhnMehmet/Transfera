@@ -141,7 +141,7 @@ API: DELETE /comments/{commentId}
 Kullanıcılar veya admin yorum silebilir.
 
 Tüm Gereksinimler (Sorumlular ile)
-1. Kullanıcı Kaydı (İbrahim Mert Bozdoğan)
+1. Yorum Güncelleme (İbrahim Mert Bozdoğan)
 2. Kullanıcı Girişi (İbrahim Mert Bozdoğan)
 3. Profil Görüntüleme (İbrahim Mert Bozdoğan)
 4. Oyuncuları Listeleme (İbrahim Mert Bozdoğan)
@@ -158,7 +158,7 @@ Tüm Gereksinimler (Sorumlular ile)
 15. Favori Oyuncu Silme (Mustafa Alican Kutsal)
 16. Oyuncu Transfer Geçmişi (Mustafa Alican Kutsal)
 17. Oyuncu Değer Tahmini (Mustafa Alican Kutsal)
-18. Yorum Güncelleme (Mustafa Alican Kutsal)
+18. Kullanıcı Kaydı (Mustafa Alican Kutsal)
 19. Kullanıcı Çıkışı (Mehmet Orhan)
 20. Hesap Silme (Mehmet Orhan)
 21. Favori Takım Ekleme (Mehmet Orhan)
