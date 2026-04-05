@@ -1,5 +1,8 @@
 ## Mustafa Alican Kutsal'ın Web Frontend Görevleri
 
+**Frontend Test Videosu:** [videom](https://youtu.be/KBN9hPudNFM)
+
+---
 
 ## 1️⃣ Kullanıcı Kaydı
 
