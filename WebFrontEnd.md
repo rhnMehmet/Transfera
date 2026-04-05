@@ -8,9 +8,8 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 ## Grup Üyelerinin Web Frontend Görevleri
 
 1. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet%20Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
-2. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](ibrahim%20Mert%20Bozdoğan/ibrahim-Mert-Bozdoğan-Web-Frontend-Gorevleri.md)
+2. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](ibrahim%20Mert%20Bozdo%C4%9Fan/ibrahim-Mert-Bozdo%C4%9Fan-Web-Frontend-Gorevleri.md)
 3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa%20Alican%20KUTSAL/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
-
 ---
 
 ## Genel Web Frontend Prensipleri
