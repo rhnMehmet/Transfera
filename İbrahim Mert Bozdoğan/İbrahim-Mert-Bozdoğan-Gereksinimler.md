@@ -1,7 +1,7 @@
-1️⃣ Kullanıcı Kaydı
+1 Yorum Güncelleme
 Geliştirici / Sorumlu: İbrahim Mert Bozdoğan
-API Metodu: POST /users/register
-Açıklama: Kullanıcıların yeni bir hesap oluşturarak sisteme kayıt olmasını sağlar. Kullanıcıdan ad, soyad, e-posta ve şifre bilgileri alınır. Şifre güvenli şekilde hashlenerek veritabanına kaydedilir. Aynı e-posta adresiyle tekrar kayıt yapılması engellenir.
+API Metodu: PUT /comments/{commentId}
+Açıklama: Kullanıcının daha önce yaptığı yorumu düzenlemesini sağlar. Güncellenen yorum içeriği doğrulandıktan sonra sistemdeki mevcut yorum verisi güncellenir ve değişiklikler anında yansıtılır.
 
 2️⃣ Kullanıcı Girişi
 Geliştirici / Sorumlu: İbrahim Mert Bozdoğan

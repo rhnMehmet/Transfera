@@ -5,7 +5,7 @@ function isDatabaseAvailable() {
 }
 
 function createDatabaseUnavailableError(
-  message = "Veritabanı şu anda kullanılamıyor."
+  message = "Veritabanı şu anda  kullanılamıyor."
 ) {
   const error = new Error(message);
   error.statusCode = 503;
