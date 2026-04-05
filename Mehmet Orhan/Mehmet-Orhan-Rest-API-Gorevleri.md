@@ -1,6 +1,6 @@
 # Mehmet Orhan'nın REST API Metotları
 
-**API Test Videosu:** [Link buraya eklenecek](https://example.com)
+**API Test Videosu:** [videom](https://youtu.be/YeCbF3M1tU0)
 
 ## 1. Kullanıcı Çıkışı
 **Endpoint:** POST /users/logout  
