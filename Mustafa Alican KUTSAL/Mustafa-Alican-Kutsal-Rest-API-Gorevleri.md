@@ -1,5 +1,7 @@
 ## Mustafa Alican Kutsal'ın REST API Metotları
 
+**API Test Videosu:** [videom](https://youtu.be/d8ptnBtG8OE)
+
 ---
 
 ## 1. Kullanıcı Kaydı
