@@ -1,6 +1,6 @@
 # İbrahim Mert BOZDOĞAN'ın REST API Metotları
 
-**API Test Videosu:** [Videom](https://youtu.be/S4VbVKW1EcU)
+**API Test Videosu:** [Videom](https://youtu.be/S4VbVKW1EcU) 
 
 
 ## 1. Yorum Güncelleme (İbrahim Mert Bozdoğan)
