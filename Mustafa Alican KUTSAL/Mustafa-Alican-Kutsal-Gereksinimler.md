@@ -1,8 +1,9 @@
-1️⃣ Profil Güncelleme
+1️⃣ Kullanıcı Kaydı
 
-API Metodu: PUT /users/{id}
+API Metodu: POST /users/register
 
-Açıklama: Kullanıcının ad, soyad, e-posta ve profil bilgilerini güncellemesini sağlar. Girilen bilgiler doğrulanarak sistemdeki mevcut kullanıcı verileri güvenli şekilde güncellenir.
+Açıklama:
+Yeni kullanıcıların sisteme kayıt olmasını sağlar. Kullanıcıdan ad, soyad, e-posta ve şifre bilgileri alınır. Girilen bilgiler doğrulanır ve şifre güvenli bir şekilde hashlenerek veritabanına kaydedilir. Aynı e-posta adresiyle birden fazla kayıt oluşturulması engellenir.
 
 2️⃣ Şifre Değiştirme
 
