@@ -22,7 +22,6 @@ Transfera, futbol transfer sureclerini veri odakli analizlerle destekleyen yapay
 
 ## Proje Linkleri
 
-- [GitHub Adresi](https://github.com/rhnMehmet/Transfera)
 - [REST API Adresi](https://transfera-backend.vercel.app/api/health)
 - [Web Frontend Adresi](https://transfera-frontend.vercel.app)
 
