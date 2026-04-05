@@ -22,7 +22,7 @@ Kullanıcının aktif oturumunu güvenli şekilde sonlandırmak.
 - Redirect handling
 
 ---
-
+ 
 ## 1️⃣1️⃣ Hesap Silme
 
 **API Endpoint:** `DELETE /users/{id}`
