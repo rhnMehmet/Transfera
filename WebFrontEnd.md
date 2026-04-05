@@ -5,11 +5,11 @@
 Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) görevleri listelenmektedir. 
 
 
-## Grup Üyelerinin Web Frontend Görevleri
+## Grup Üyelerinin REST API Metotları
 
-1. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](ibrahim%20Mert%20Bozdoğan/ibrahim-Mert-Bozdoğan-Web-Frontend-Gorevleri.md)
-2. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet%20Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
-3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa%20Alican%20KUTSAL/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
+1. [Mehmet Orhan'ın REST API Metotları](Mehmet%20Orhan/Mehmet-Orhan-Rest-API-Gorevleri.md)
+2. [İbrahim Mert Bozdoğan'ın REST API Metotları](ibrahim%20Mert%20Bozdoğan/ibrahim-Mert-Bozdoğan-Rest-API-Gorevleri.md)
+3. [Mustafa Alican Kutsal'ın REST API Metotları](Mustafa%20Alican%20KUTSAL/Mustafa-Alican-Kutsal-Rest-API-Gorevleri.md)
 
 ---
 
