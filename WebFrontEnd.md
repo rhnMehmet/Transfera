@@ -7,9 +7,9 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 
 ## Grup Üyelerinin Web Frontend Görevleri
 
-1. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](Ibrahim-Mert-Bozdogan/Ibrahim-Mert-Bozdogan-Web-Frontend-Gorevleri.md)
-2. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet-Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
-3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa-Alican-Kutsal/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
+1. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](ibrahim Mert Bozdoğan/ibrahim-Mert-Bozdogan-Web-Frontend-Gorevleri.md)
+2. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
+3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa Alican KUTSAL/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
 
 ---
 
