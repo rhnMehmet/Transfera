@@ -2,30 +2,30 @@
 
 **Web Frontend Adresi:** [transfera-frontend](https://transfera-frontend.vercel.app)
 
-Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) görevleri listelenmektedir. 
-
+Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) görevleri listelenmektedir.
 
 ## Grup Üyelerinin Web Frontend Görevleri
 
-1. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet%20Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
-2. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](ibrahim%20Mert%20Bozdo%C4%9Fan/ibrahim-Mert-Bozdo%C4%9Fan-Web-Frontend-Gorevleri.md)
-3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa%20Alican%20KUTSAL/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
+1. [Mehmet Orhan'ın Web Frontend Görevleri](Mehmet Orhan/Mehmet-Orhan-Web-Frontend-Gorevleri.md)
+2. [İbrahim Mert Bozdoğan'ın Web Frontend Görevleri](İbrahim Mert Bozdoğan/İbrahim-Mert-Bozdoğan-Web-Frontend-Gorevleri.md)
+3. [Mustafa Alican Kutsal'ın Web Frontend Görevleri](Mustafa Alican KUTSAL/Mustafa-Alican-Kutsal-Web-Frontend-Gorevleri.md)
+
 ---
 
 ## Genel Web Frontend Prensipleri
 
 ### 1. Responsive Tasarım
 - **Mobile-First Approach:** Önce mobil tasarım, sonra desktop
-- **Breakpoints:** 
+- **Breakpoints:**
   - Mobile: < 768px
   - Tablet: 768px - 1024px
   - Desktop: > 1024px
 - **Flexible Layouts:** CSS Grid ve Flexbox kullanımı
-- **Responsive Images:** srcset ve sizes attributes
+- **Responsive Images:** `srcset` ve `sizes` attributes
 - **Touch-Friendly:** Minimum 44x44px touch targets
 
 ### 2. Tasarım Sistemi
-- **CSS Framework:** Bootstrap, Tailwind CSS, Material-UI, veya custom
+- **CSS Framework:** Bootstrap, Tailwind CSS, Material-UI veya custom
 - **Renk Paleti:** Tutarlı renk kullanımı (CSS variables)
 - **Tipografi:** Web-safe fonts veya web fonts (Google Fonts)
 - **Spacing:** Tutarlı padding ve margin değerleri (8px grid sistemi)
@@ -34,7 +34,7 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 
 ### 3. Performans Optimizasyonu
 - **Code Splitting:** Route-based ve component-based splitting
-- **Lazy Loading:** Images, components, ve routes
+- **Lazy Loading:** Images, components ve routes
 - **Minification:** CSS ve JavaScript minification
 - **Compression:** Gzip/Brotli compression
 - **Caching:** Browser caching, service worker (PWA)
@@ -44,7 +44,7 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 - **Meta Tags:** Title, description, keywords
 - **Structured Data:** JSON-LD schema markup
 - **Semantic HTML:** Proper HTML5 semantic elements
-- **Alt Text:** Image alt attributes
+- **Alt Text:** Image `alt` attributes
 - **Sitemap:** XML sitemap generation
 - **Robots.txt:** Search engine crawling rules
 
@@ -93,6 +93,6 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 ### 11. Build ve Deployment
 - **Build Tool:** Webpack, Vite, Parcel, esbuild
 - **Module Bundler:** ES modules, CommonJS
-- **Environment Variables:** .env files
+- **Environment Variables:** `.env` files
 - **CI/CD:** GitHub Actions, GitLab CI, Jenkins
 - **Hosting:** Vercel, Netlify, AWS, Azure
