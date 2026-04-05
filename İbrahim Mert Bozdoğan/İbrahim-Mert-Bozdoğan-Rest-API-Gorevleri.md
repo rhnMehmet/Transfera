@@ -2,7 +2,8 @@
 
 **API Test Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 1. Yorum Güncelleme
+
+## 1. Yorum Güncelleme (İbrahim Mert Bozdoğan)
 **Endpoint:** PUT /comments/{commentId}  
 **Path Parameters:** commentId (string, required) - Yorum ID'si  
 
@@ -18,7 +19,7 @@
 
 ---
 
-## 2. Kullanıcı Girişi
+## 2. Kullanıcı Girişi (İbrahim Mert Bozdoğan)
 **Endpoint:** POST /users/login  
 
 **Request Body:**
@@ -46,7 +47,7 @@
 
 ---
 
-## 3. Profil Görüntüleme
+## 3. Profil Görüntüleme (İbrahim Mert Bozdoğan)
 **Endpoint:** GET /users/{id}  
 **Path Parameters:** id (string, required) - Kullanıcı ID'si  
 
@@ -59,14 +60,13 @@
   "firstName": "Admin",
   "lastName": "Hesap",
   "email": "admin@test.com",
-  "role": "ADMIN",
-  "createdAt": "2026-04-05T10:00:00Z"
+  "role": "ADMIN"
 }
 ```
 
 ---
 
-## 4. Oyuncuları Listeleme
+## 4. Oyuncuları Listeleme (İbrahim Mert Bozdoğan)
 **Endpoint:** GET /players  
 
 **Query Parameters (opsiyonel):**  
@@ -82,22 +82,14 @@
     "id": "101",
     "name": "Lionel Messi",
     "position": "RW",
-    "team": "Inter Miami",
-    "marketValue": 35000000
-  },
-  {
-    "id": "102",
-    "name": "Kylian Mbappe",
-    "position": "ST",
-    "team": "PSG",
-    "marketValue": 180000000
+    "team": "Inter Miami"
   }
 ]
 ```
 
 ---
 
-## 5. Oyuncu Detayı Görüntüleme
+## 5. Oyuncu Detayı Görüntüleme (İbrahim Mert Bozdoğan)
 **Endpoint:** GET /players/{playerId}  
 **Path Parameters:** playerId (string, required) - Oyuncu ID'si  
 
@@ -110,17 +102,13 @@
   "age": 37,
   "position": "RW",
   "team": "Inter Miami",
-  "statistics": {
-    "goals": 20,
-    "assists": 15
-  },
   "marketValue": 35000000
 }
 ```
 
 ---
 
-## 6. Transferleri Listeleme
+## 6. Transferleri Listeleme (İbrahim Mert Bozdoğan)
 **Endpoint:** GET /transfers  
 
 **Response:** 200 OK - Transferler listelendi  
@@ -139,18 +127,18 @@
 
 ---
 
-## 7. Favori Takım Silme
+## 7. Favori Takım Silme (İbrahim Mert Bozdoğan)
 **Endpoint:** DELETE /users/{id}/favorites/teams/{teamId}  
 **Path Parameters:**  
-- id (string, required) - Kullanıcı ID'si  
-- teamId (string, required) - Takım ID'si  
+- id (string, required)  
+- teamId (string, required)  
 
 **Authentication:** Bearer Token gerekli  
 **Response:** 204 No Content - Takım favorilerden kaldırıldı  
 
 ---
 
-## 8. Transfer Tahmini Oluşturma
+## 8. AI Transfer Uyum Tahmini (İbrahim Mert Bozdoğan)
 **Endpoint:** POST /ai/transfer-predictions  
 
 **Request Body:**
@@ -160,7 +148,7 @@
 }
 ```
 
-**Response:** 200 OK - Transfer tahmini oluşturuldu  
+**Response:** 200 OK - Transfer uyum tahmini oluşturuldu  
 
 ```json
 {
@@ -169,3 +157,19 @@
   "probability": 0.87
 }
 ```
+
+---
+
+## 9. Yorum Ekleme (İbrahim Mert Bozdoğan)
+**Endpoint:** POST /comments  
+
+**Request Body:**
+```json
+{
+  "content": "Harika bir oyuncu!",
+  "playerId": "101"
+}
+```
+
+**Authentication:** Bearer Token gerekli  
+**Response:** 201 Created - Yorum başarıyla eklendi
