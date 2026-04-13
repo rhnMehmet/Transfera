@@ -1,0 +1,55 @@
+services:
+  transfera_frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: transfera_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/frontend
+      - /frontend/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - transfera_backend
+    restart: unless-stopped
+
+  transfera_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: transfera_backend
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MONGODB_URI: mongodb://mongo:27017/transfera
+      ALLOWED_ORIGINS: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-transfera_dev_secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      SPORTMONKS_API_TOKEN: ${SPORTMONKS_API_TOKEN:-}
+      SPORTMONKS_BASE_URL: ${SPORTMONKS_BASE_URL:-https://api.sportmonks.com/v3/football}
+      SPORTMONKS_TIMEOUT: ${SPORTMONKS_TIMEOUT:-15000}
+      MONGODB_SERVER_SELECTION_TIMEOUT_MS: 5000
+    volumes:
+      - ./backend:/backend
+      - /backend/node_modules
+    command: npm run dev
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: transfera_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

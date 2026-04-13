@@ -196,8 +196,12 @@ export const storage = {
     localStorage.removeItem(TOKEN_KEY);
   },
   getUser() {
-    const raw = localStorage.getItem("transfera_user");
-    return raw ? normalizeStoredUser(JSON.parse(raw)) : null;
+    const parsed = readLocalStorageJson("transfera_user");
+    if (!parsed) {
+      return null;
+    }
+
+    return normalizeStoredUser(parsed);
   },
   setUser(user) {
     localStorage.setItem(
