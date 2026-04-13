@@ -1,7 +1,41 @@
 const mongoose = require("mongoose");
 
+let databaseConnectionPromise = null;
+
 function isDatabaseAvailable() {
   return mongoose.connection.readyState === 1;
+}
+
+async function ensureDatabaseConnection() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (databaseConnectionPromise) {
+    return databaseConnectionPromise;
+  }
+
+  const MONGODB_URI =
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI ||
+    "mongodb://127.0.0.1:27017/transfera";
+  const serverSelectionTimeoutMS = Number(
+    process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000
+  );
+
+  databaseConnectionPromise = mongoose
+    .connect(MONGODB_URI, {
+      serverSelectionTimeoutMS,
+    })
+    .then((connection) => {
+      return connection;
+    })
+    .catch((error) => {
+      databaseConnectionPromise = null;
+      throw error;
+    });
+
+  return databaseConnectionPromise;
 }
 
 function createDatabaseUnavailableError(
@@ -21,6 +55,7 @@ function buildDatabaseUnavailablePayload(message) {
 
 module.exports = {
   isDatabaseAvailable,
+  ensureDatabaseConnection,
   createDatabaseUnavailableError,
   buildDatabaseUnavailablePayload,
 };

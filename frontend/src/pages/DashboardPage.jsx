@@ -394,7 +394,7 @@ export default function DashboardPage() {
     try {
       await logoutUser();
     } finally {
-      navigate("/login", { replace: true });
+      window.location.replace("/login");
     }
   }
 

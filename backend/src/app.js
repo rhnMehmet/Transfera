@@ -13,25 +13,16 @@ const transferRoutes = require("./routes/transferRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const { isDatabaseAvailable } = require("./utils/database");
+const { ensureDatabaseConnection, isDatabaseAvailable } = require("./utils/database");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  process.env.MONGO_URI ||
-  "mongodb://127.0.0.1:27017/transfera";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const MONGODB_SERVER_SELECTION_TIMEOUT_MS = Number(
-  process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000
-);
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 const hasFrontendBuild = fs.existsSync(frontendDistPath);
-
-let databaseConnectionPromise = null;
 
 app.use( 
   cors({
@@ -47,6 +38,29 @@ app.use(
 
 app.use(express.json());
 
+app.use(
+  [
+    "/users",
+    "/players",
+    "/teams",
+    "/transfers",
+    "/ai",
+    "/admin",
+    "/api/players",
+    "/api/teams",
+    "/api/comments",
+  ],
+  async (req, res, next) => {
+    try {
+      await ensureDatabaseConnection();
+    } catch (error) {
+      console.error("MongoDB baglantisi kurulamadi:", error.message);
+    }
+
+    next();
+  }
+);
+
 function buildHealthPayload() {
   return {
     name: "TRANSFERA API",
@@ -57,7 +71,11 @@ function buildHealthPayload() {
 }
 
 app.get("/api/health", async (req, res) => {
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+  } catch (error) {
+    console.error("Health check sirasinda MongoDB baglantisi kurulamadi:", error.message);
+  }
   res.json(buildHealthPayload());
 });
 
@@ -84,7 +102,11 @@ app.get("/", async (req, res) => {
     return res.sendFile(path.join(frontendDistPath, "index.html"));
   }
 
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+  } catch (error) {
+    console.error("Root isteginde MongoDB baglantisi kurulamadi:", error.message);
+  }
   return res.json(buildHealthPayload());
 });
 
@@ -92,37 +114,20 @@ app.use((req, res) => {
   res.status(404).json({ message: "Endpoint bulunamadi." });
 });
 
-async function connectToDatabase() {
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-
-  if (databaseConnectionPromise) {
-    return databaseConnectionPromise;
-  }
-
-  try {
-    databaseConnectionPromise = mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: MONGODB_SERVER_SELECTION_TIMEOUT_MS,
-    });
-
-    await databaseConnectionPromise;
-    console.log("MongoDB baglandi.");
-  } catch (error) {
-    databaseConnectionPromise = null;
-    console.error(
-      "MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
-      error.message
-    );
-  }
-}
-
 async function startServer() {
   app.listen(PORT, () => {
     console.log(`Server calisiyor: http://localhost:${PORT}`);
   });
 
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+    console.log("MongoDB baglandi.");
+  } catch (error) {
+    console.error(
+      "MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
+      error.message
+    );
+  }
 }
 
 mongoose.connection.on("connected", () => {
@@ -137,7 +142,12 @@ mongoose.connection.on("error", (error) => {
   console.error("MongoDB hatasi:", error.message);
 });
 
-connectToDatabase();
+ensureDatabaseConnection().catch((error) => {
+  console.error(
+    "Ilk MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
+    error.message
+  );
+});
 
 if (require.main === module) {
   startServer();

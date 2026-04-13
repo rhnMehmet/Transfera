@@ -77,8 +77,11 @@ export default function AdminPage() {
   const highlightedUser = filteredUsers[0] || users[0] || null;
 
   async function handleLogout() {
-    await logoutUser();
-    navigate("/login", { replace: true });
+    try {
+      await logoutUser();
+    } finally {
+      window.location.replace("/login");
+    }
   }
 
   return (
