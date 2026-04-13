@@ -133,10 +133,28 @@ export function normalizeStoredUser(user) {
     return null;
   }
 
+  const resolvedId = user.id || user._id || null;
+  const favorites = user.favorites || {};
+  const notificationPreferences = user.notificationPreferences || {};
+
   return {
     ...user,
-    id: user.id || user._id || null,
+    id: resolvedId != null ? String(resolvedId) : null,
+    favorites: {
+      players: Array.isArray(favorites.players) ? favorites.players : [],
+      teams: Array.isArray(favorites.teams) ? favorites.teams : [],
+    },
+    notificationPreferences: {
+      transferUpdates: notificationPreferences.transferUpdates ?? true,
+      matchAlerts: notificationPreferences.matchAlerts ?? true,
+      newsletter: notificationPreferences.newsletter ?? false,
+    },
   };
+}
+
+export function getCurrentUserId(user = storage.getUser()) {
+  const resolvedId = user?.id || user?._id || null;
+  return resolvedId != null ? String(resolvedId) : null;
 }
 
 export async function resolveLeagueMeta(leagueName) {
@@ -204,10 +222,7 @@ export const storage = {
     return normalizeStoredUser(parsed);
   },
   setUser(user) {
-    localStorage.setItem(
-      "transfera_user",
-      JSON.stringify(normalizeStoredUser(user))
-    );
+    writeLocalStorageJson("transfera_user", normalizeStoredUser(user));
   },
   clearUser() {
     localStorage.removeItem("transfera_user");

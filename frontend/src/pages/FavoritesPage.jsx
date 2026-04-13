@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   fetchLeaguePlayers,
   fetchLeagueTeams,
+  getCurrentUserId,
   KNOWN_LEAGUES,
   resolvePlayerById,
   resolveTeamById,
@@ -95,7 +96,8 @@ export default function FavoritesPage() {
   const [playerSearch, setPlayerSearch] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loadingFavorites, setLoadingFavorites] = useState(true);
-  const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  const [loadingTeamCatalog, setLoadingTeamCatalog] = useState(false);
+  const [loadingPlayerCatalog, setLoadingPlayerCatalog] = useState(false);
 
   useEffect(() => {
     async function bootstrapPage() {
@@ -107,13 +109,12 @@ export default function FavoritesPage() {
       }
 
       setLoadingFavorites(true);
-      setLoadingCatalogs(true);
 
       try {
         const refreshedProfile = await getProfile(currentUser.id);
         setProfile(refreshedProfile);
 
-        const [teams, players, teamPages, playerPages] = await Promise.all([
+        const [teams, players] = await Promise.all([
           Promise.all(
             (refreshedProfile.favorites?.teams || []).map((teamId) =>
               hydrateFavoriteTeam(teamId)
@@ -124,58 +125,103 @@ export default function FavoritesPage() {
               hydrateFavoritePlayer(playerId)
             )
           ),
-          Promise.all(
-            KNOWN_LEAGUES.map((league) =>
-              fetchLeagueTeams(league).then((data) => ({ data: { data } }))
-            )
-          ),
-          Promise.all(
-            KNOWN_LEAGUES.map((league) =>
-              fetchLeaguePlayers(league).then((data) => ({ data: { data } }))
-            )
-          ),
         ]);
-
-        const nextTeams = dedupeById(
-          teamPages.flatMap((response, index) => {
-            const leagueName = KNOWN_LEAGUES[index];
-            const teamsForLeague = (response.data?.data || []).map((team) =>
-              normalizeCatalogTeam(team, leagueName)
-            );
-
-            return teamsForLeague;
-          })
-        );
-
-        const nextPlayers = dedupeById(
-          playerPages.flatMap((response, index) => {
-            const leagueName = KNOWN_LEAGUES[index];
-            return (response.data?.data || []).map((player) =>
-              normalizeCatalogPlayer(player, leagueName)
-            );
-          })
-        );
 
         setFavoriteTeams(teams.filter(Boolean));
         setFavoritePlayers(players.filter(Boolean));
-        setTeamCatalog(nextTeams);
-        setPlayerCatalog(nextPlayers);
       } catch (error) {
         setFeedback(
           error.response?.data?.message || "Favoriler sayfası yüklenemedi."
         );
       } finally {
         setLoadingFavorites(false);
-        setLoadingCatalogs(false);
       }
     }
 
     bootstrapPage();
   }, [navigate]);
 
+  useEffect(() => {
+    async function loadTeamCatalog() {
+      if (!teamSearch.trim() || teamCatalog.length || loadingTeamCatalog) {
+        return;
+      }
+
+      setLoadingTeamCatalog(true);
+
+      try {
+        const teamPages = await Promise.all(
+          KNOWN_LEAGUES.map((league) => fetchLeagueTeams(league))
+        );
+
+        const nextTeams = dedupeById(
+          teamPages.flatMap((teamsForLeague, index) => {
+            const leagueName = KNOWN_LEAGUES[index];
+            return (teamsForLeague || []).map((team) =>
+              normalizeCatalogTeam(team, leagueName)
+            );
+          })
+        );
+
+        setTeamCatalog(nextTeams);
+      } catch (error) {
+        setFeedback(
+          error.response?.data?.message || "Takım kataloğu yüklenemedi."
+        );
+      } finally {
+        setLoadingTeamCatalog(false);
+      }
+    }
+
+    loadTeamCatalog();
+  }, [loadingTeamCatalog, teamCatalog.length, teamSearch]);
+
+  useEffect(() => {
+    async function loadPlayerCatalog() {
+      if (!playerSearch.trim() || playerCatalog.length || loadingPlayerCatalog) {
+        return;
+      }
+
+      setLoadingPlayerCatalog(true);
+
+      try {
+        const playerPages = await Promise.all(
+          KNOWN_LEAGUES.map((league) => fetchLeaguePlayers(league))
+        );
+
+        const nextPlayers = dedupeById(
+          playerPages.flatMap((playersForLeague, index) => {
+            const leagueName = KNOWN_LEAGUES[index];
+            return (playersForLeague || []).map((player) =>
+              normalizeCatalogPlayer(player, leagueName)
+            );
+          })
+        );
+
+        setPlayerCatalog(nextPlayers);
+      } catch (error) {
+        setFeedback(
+          error.response?.data?.message || "Oyuncu kataloğu yüklenemedi."
+        );
+      } finally {
+        setLoadingPlayerCatalog(false);
+      }
+    }
+
+    loadPlayerCatalog();
+  }, [loadingPlayerCatalog, playerCatalog.length, playerSearch]);
+
   async function addFavoriteTeam(team) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.post(`/users/${profile.id}/favorites/teams`, { teamId: team.id });
+      await api.post(`/users/${profileId}/favorites/teams`, { teamId: team.id });
       const normalizedTeam = normalizeCatalogTeam(team, team?.league);
       setProfile((current) => updateStoredUserFavorites("team", team.id, true) || current);
       setFavoriteTeams((current) =>
@@ -190,8 +236,16 @@ export default function FavoritesPage() {
   }
 
   async function removeFavoriteTeam(teamId) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.delete(`/users/${profile.id}/favorites/teams/${teamId}`);
+      await api.delete(`/users/${profileId}/favorites/teams/${teamId}`);
       setProfile((current) => updateStoredUserFavorites("team", teamId, false) || current);
       setFavoriteTeams((current) =>
         current.filter((team) => Number(team.id) !== Number(teamId))
@@ -203,8 +257,16 @@ export default function FavoritesPage() {
   }
 
   async function addFavoritePlayer(player) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.post(`/users/${profile.id}/favorites/players`, { playerId: player.id });
+      await api.post(`/users/${profileId}/favorites/players`, { playerId: player.id });
       setProfile((current) => updateStoredUserFavorites("player", player.id, true) || current);
       setFavoritePlayers((current) =>
         current.some((item) => Number(item.id) === Number(player.id))
@@ -218,8 +280,16 @@ export default function FavoritesPage() {
   }
 
   async function removeFavoritePlayer(playerId) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.delete(`/users/${profile.id}/favorites/players/${playerId}`);
+      await api.delete(`/users/${profileId}/favorites/players/${playerId}`);
       setProfile((current) => updateStoredUserFavorites("player", playerId, false) || current);
       setFavoritePlayers((current) =>
         current.filter((player) => Number(player.id) !== Number(playerId))
@@ -306,7 +376,7 @@ export default function FavoritesPage() {
               </div>
             </div>
             <div className="list-stack favorites-scroll">
-              {loadingCatalogs ? (
+              {loadingTeamCatalog ? (
                 <div className="stat-box">
                   <small>Katalog</small>
                   <strong>Takımlar yükleniyor...</strong>
@@ -444,7 +514,7 @@ export default function FavoritesPage() {
               </div>
             </div>
             <div className="list-stack favorites-scroll">
-              {loadingCatalogs ? (
+              {loadingPlayerCatalog ? (
                 <div className="stat-box">
                   <small>Katalog</small>
                   <strong>Oyuncular yükleniyor...</strong>

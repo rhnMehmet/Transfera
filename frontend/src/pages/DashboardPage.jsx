@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api, {
   fetchLeaguePlayers,
   fetchLeagueTeams,
+  getCurrentUserId,
   resolvePlayerById,
   resolveTeamById,
   storage,
@@ -337,8 +338,15 @@ export default function DashboardPage() {
   }
 
   async function handleToggleFavoriteTeam(team) {
+    const profileId = getCurrentUserId(profile);
     const teamId = team.id;
     const currentlyFavorite = isFavoriteTeam(teamId);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
 
     setFavoriteTeamLoadingId(teamId);
     setData((current) => ({
@@ -352,10 +360,10 @@ export default function DashboardPage() {
 
     try {
       if (currentlyFavorite) {
-        await api.delete(`/users/${profile.id}/favorites/teams/${teamId}`);
+        await api.delete(`/users/${profileId}/favorites/teams/${teamId}`);
         setFeedback("Takım favorilerden çıkarıldı.");
       } else {
-        await api.post(`/users/${profile.id}/favorites/teams`, { teamId });
+        await api.post(`/users/${profileId}/favorites/teams`, { teamId });
         setFeedback("Takım favorilere eklendi.");
       }
 
@@ -383,8 +391,11 @@ export default function DashboardPage() {
   }
 
   async function handleLogout() {
-    await logoutUser();
-    navigate("/login");
+    try {
+      await logoutUser();
+    } finally {
+      navigate("/login", { replace: true });
+    }
   }
 
   const filteredTeams = data.teams.filter((team) =>

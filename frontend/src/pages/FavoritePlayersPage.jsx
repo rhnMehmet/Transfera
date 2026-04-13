@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api, { resolveTeamLeague, storage } from "../services/api";
+import api, { getCurrentUserId, resolveTeamLeague, storage } from "../services/api";
 import { getProfile } from "../services/authService";
 import { getEntityImage, getInitials } from "../services/brandAssets";
 
@@ -93,9 +93,17 @@ export default function FavoritePlayersPage() {
   }, [search]);
 
   async function addFavoritePlayer(playerId) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.post(`/users/${profile.id}/favorites/players`, { playerId });
-      const refreshedProfile = await getProfile(profile.id);
+      await api.post(`/users/${profileId}/favorites/players`, { playerId });
+      const refreshedProfile = await getProfile(profileId);
       setProfile(refreshedProfile);
 
       const { data } = await api.get(`/players/${playerId}`);
@@ -128,9 +136,17 @@ export default function FavoritePlayersPage() {
   }
 
   async function removeFavoritePlayer(playerId) {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.delete(`/users/${profile.id}/favorites/players/${playerId}`);
-      const refreshedProfile = await getProfile(profile.id);
+      await api.delete(`/users/${profileId}/favorites/players/${playerId}`);
+      const refreshedProfile = await getProfile(profileId);
       setProfile(refreshedProfile);
       setFavoritePlayers((current) =>
         current.filter((player) => player.id !== playerId)

@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
@@ -13,16 +14,30 @@ const JWT_SECRET = process.env.JWT_SECRET || "transfera-dev-secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 
 function sanitizeUser(user) {
+  const source = typeof user?.toObject === "function" ? user.toObject() : user;
+  const resolvedId = source?.id || source?._id || null;
+
   return {
-    id: user._id,
-    name: user.name,
-    surname: user.surname,
-    email: user.email,
-    role: user.role,
-    favorites: user.favorites,
-    notificationPreferences: user.notificationPreferences,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    id: resolvedId ? resolvedId.toString() : null,
+    name: source?.name,
+    surname: source?.surname,
+    email: source?.email,
+    role: source?.role,
+    favorites: {
+      players: Array.isArray(source?.favorites?.players)
+        ? source.favorites.players
+        : [],
+      teams: Array.isArray(source?.favorites?.teams)
+        ? source.favorites.teams
+        : [],
+    },
+    notificationPreferences: {
+      transferUpdates: source?.notificationPreferences?.transferUpdates ?? true,
+      matchAlerts: source?.notificationPreferences?.matchAlerts ?? true,
+      newsletter: source?.notificationPreferences?.newsletter ?? false,
+    },
+    createdAt: source?.createdAt || null,
+    updatedAt: source?.updatedAt || null,
   };
 }
 
@@ -34,7 +49,10 @@ function createToken(user) {
       email: user.email,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      jwtid: crypto.randomUUID(),
+    }
   );
 }
 
@@ -210,7 +228,7 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "Kullanıcı bulunamadı." });
     }
 
-    res.json({ user });
+    res.json({ user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({
       message: "Profil bilgileri alınamadı.",
@@ -266,7 +284,7 @@ exports.updateProfile = async (req, res) => {
 
     res.json({
       message: "Profil güncellendi.",
-      user,
+      user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({
