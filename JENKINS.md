@@ -48,6 +48,59 @@ Sonra:
 9. `Save`
 10. `Build Now`
 
+Sunumdaki ekran goruntusundeki alanlarla eslestirme:
+
+- `Branches to build`: `*/main`
+- `Script Path`: `Jenkinsfile`
+- `Lightweight checkout`: acik kalabilir
+- Pipeline ilk calismada arka planda bir `Checkout SCM` adimi da gosterebilir; bu normaldir
+
+## GitHub Webhook ve Tunnel
+
+Sunumdaki ornekte Jenkins yerel makinada `localhost:8080` uzerinden calistigi icin GitHub webhook'unun Jenkins'e ulasabilmesi icin gecici bir public URL kullanilir. Bunun icin Cloudflare Tunnel kullanilabilir.
+
+### 1. Cloudflare tunnel baslat
+
+Windows PowerShell ornegi:
+
+```powershell
+cloudflared tunnel --url http://localhost:8080
+```
+
+Komut calisinca su tipte bir adres verir:
+
+```text
+https://ornek-adres.trycloudflare.com
+```
+
+### 2. GitHub webhook ekle
+
+GitHub repo ayarlari:
+
+1. `Settings`
+2. `Webhooks`
+3. `Add webhook`
+4. `Payload URL` alanina:
+
+```text
+https://ornek-adres.trycloudflare.com/github-webhook/
+```
+
+5. `Content type`: `application/x-www-form-urlencoded`
+6. `Secret`: bos birakilabilir
+7. `Enable SSL verification`: acik
+8. `Just the push event` sec
+9. `Add webhook`
+
+Bu repodaki `Jenkinsfile` icinde `githubPush()` tetigi tanimlidir. Bu nedenle `main` dalina her `push` geldiginde Jenkins build'i otomatik baslatabilir.
+
+### 3. Jenkins tarafinda kontrol et
+
+- Pipeline ayarlarinda repo adresi dogru olmali
+- Branch `*/main` olmali
+- Jenkins'in GitHub eklentileri yuklu olmali
+- Tunnel kapandiysa GitHub webhook URL'i gecersiz hale gelir; yeni tunnel acildiginda webhook URL'i guncellenmelidir
+
 ## Pipeline Ne Yapar
 
 `Jenkinsfile` su adimlari calistirir:
@@ -56,9 +109,18 @@ Sonra:
 2. `docker compose -f docker-compose.ci.yaml config` ile CI compose dosyasini dogrular
 3. mevcut containerlari durdurur
 4. projeyi `docker compose -f docker-compose.ci.yaml up -d --build` ile yeniden kaldirir
-5. backend container icinde `http://localhost:3000/api/health`
-6. frontend container icinde `http://localhost:5173`
-   adreslerinden saglik kontrolu yapar
+5. backend container icinde `http://127.0.0.1:3000/api/health` adresine gercek HTTP istegi atar
+6. frontend container icinde `http://127.0.0.1:5173` adresine gercek HTTP istegi atar
+7. `post` adiminda container durumunu listeler
+
+Blue Ocean veya Stage View ekraninda asagidakine yakin bir akis gorursun:
+
+- `Checkout SCM`
+- `Checkout`
+- `Docker Compose Validation`
+- `Build and Deploy`
+- `Health Check`
+- `Post Actions`
 
 ## Neden Ayri CI Compose Dosyasi Var
 
@@ -83,3 +145,19 @@ docker compose -f docker-compose.jenkins.yaml down
 ## Not
 
 Sunumdaki beklentiye gore repoda `Jenkinsfile` bulunmasi ve Docker uzerinden frontend ile REST API'nin calistiginin gosterilmesi gerekir. Bu altyapi o beklentiye gore hazirlandi.
+
+Bu repoda zaten tamamlanmis kisimlar:
+
+- `Jenkinsfile` mevcut
+- Jenkins icin ozel Docker imaji mevcut
+- Ayrik `docker-compose.jenkins.yaml` mevcut
+- Ayrik `docker-compose.ci.yaml` mevcut
+- Backend health endpoint mevcut: `/api/health`
+- Docker Desktop uzerinde Jenkins, frontend, backend ve Mongo birlikte kalkiyor
+
+Sunumla tam eslesmesi icin manuel yapilacak kisimlar:
+
+- GitHub webhook eklemek
+- Gerekirse Cloudflare tunnel URL'ini guncellemek
+- Jenkins UI icinde pipeline'i `Pipeline script from SCM` olarak tanimlamak
+- Bir `push` atip webhook tetigini gostermek
