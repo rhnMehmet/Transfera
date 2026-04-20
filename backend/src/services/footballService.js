@@ -42,7 +42,10 @@ const CACHE_TTL_SECONDS = {
   teams: Number(process.env.REDIS_TEAMS_CACHE_TTL_SECONDS || 300),
   teamDetails: Number(process.env.REDIS_TEAM_DETAILS_CACHE_TTL_SECONDS || 300),
   playerDetails: Number(process.env.REDIS_PLAYER_DETAILS_CACHE_TTL_SECONDS || 300),
+  players: Number(process.env.REDIS_PLAYERS_CACHE_TTL_SECONDS || 300),
+  marketValue: Number(process.env.REDIS_MARKET_VALUE_CACHE_TTL_SECONDS || 300),
   transfers: Number(process.env.REDIS_TRANSFERS_CACHE_TTL_SECONDS || 300),
+  transferFeed: Number(process.env.REDIS_TRANSFER_FEED_CACHE_TTL_SECONDS || 300),
 };
 
 function buildCacheKey(prefix, payload) {
@@ -932,6 +935,29 @@ async function getTeamSquad(teamId, teamMeta = null) {
 
 async function getPlayers(query = {}) {
   const { page, limit, skip } = parsePagination(query);
+  const normalizedLeague = normalizeLeagueName(query.league);
+  const playersCacheKey = buildCacheKey("players:list", {
+    league: normalizedLeague || null,
+    teamId: query.teamId || null,
+    search: query.search || null,
+    position: query.position || null,
+    ageMin: query.ageMin || null,
+    ageMax: query.ageMax || null,
+  });
+  const cachedPlayers = await getJson(playersCacheKey);
+
+  if (Array.isArray(cachedPlayers)) {
+    return {
+      data: cachedPlayers.slice(skip, skip + limit),
+      pagination: {
+        page,
+        limit,
+        total: cachedPlayers.length,
+        totalPages: Math.ceil(cachedPlayers.length / limit) || 1,
+      },
+    };
+  }
+
   if (query.league) {
     const teamsResult = await getTeams({ league: query.league, page: 1, limit: 50 });
     const squadResults = await Promise.all(
@@ -961,6 +987,7 @@ async function getPlayers(query = {}) {
     }
 
     const overriddenPlayers = await applyPlayerOverrides(players);
+    await setJson(playersCacheKey, overriddenPlayers, CACHE_TTL_SECONDS.players);
 
     return {
       data: overriddenPlayers.slice(skip, skip + limit),
@@ -1005,6 +1032,7 @@ async function getPlayers(query = {}) {
   }
 
   const overriddenPlayers = await applyPlayerOverrides(players);
+  await setJson(playersCacheKey, overriddenPlayers, CACHE_TTL_SECONDS.players);
 
   return {
     data: overriddenPlayers.slice(skip, skip + limit),
@@ -1117,6 +1145,18 @@ async function getPlayerDetails(playerId, query = {}) {
 }
 
 async function getPlayerMarketValue(playerId, query = {}) {
+  const marketValueCacheKey = buildCacheKey("player:market-value", {
+    playerId: Number(playerId),
+    teamId: query.teamId || null,
+    teamName: query.teamName || null,
+    leagueName: query.leagueName || query.league || null,
+  });
+  const cachedMarketValue = await getJson(marketValueCacheKey);
+
+  if (cachedMarketValue) {
+    return cachedMarketValue;
+  }
+
   const profile = await getPlayerDetails(playerId, query);
   const transfers = profile.player.transfers || [];
   const current = profile.player.marketValue.current;
@@ -1135,7 +1175,7 @@ async function getPlayerMarketValue(playerId, query = {}) {
     });
   }
 
-  return {
+  const result = {
     playerId: Number(playerId),
     currentValue: {
       amount: current,
@@ -1143,6 +1183,14 @@ async function getPlayerMarketValue(playerId, query = {}) {
     },
     history,
   };
+
+  await setJson(
+    marketValueCacheKey,
+    result,
+    CACHE_TTL_SECONDS.marketValue
+  );
+
+  return result;
 }
 
 async function getTransfers(query = {}) {
@@ -1160,7 +1208,13 @@ async function getTransfers(query = {}) {
     return cachedTransfers;
   }
 
-  const payload = await requestTransferFeed(page);
+  const transferFeedCacheKey = buildCacheKey("transfers:feed", { page });
+  let payload = await getJson(transferFeedCacheKey);
+
+  if (!payload) {
+    payload = await requestTransferFeed(page);
+    await setJson(transferFeedCacheKey, payload, CACHE_TTL_SECONDS.transferFeed);
+  }
 
   let transfers = (payload.data || []).map(mapTransfer);
 

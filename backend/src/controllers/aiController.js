@@ -1,5 +1,14 @@
 const footballService = require("../services/footballService");
 const aiService = require("../services/aiService");
+const { getJson, setJson } = require("../services/redisClient");
+
+const AI_CACHE_TTL_SECONDS = Number(
+  process.env.REDIS_AI_CACHE_TTL_SECONDS || 900
+);
+
+function buildAiCacheKey(prefix, payload) {
+  return `${prefix}:${JSON.stringify(payload)}`;
+}
 
 exports.createTransferPrediction = async (req, res) => {
   try {
@@ -16,6 +25,21 @@ exports.createTransferPrediction = async (req, res) => {
       return res.status(400).json({ message: "playerId zorunludur." });
     }
 
+    const cacheKey = buildAiCacheKey("ai:transfer-prediction", {
+      playerId: Number(playerId),
+      currentTeamId: currentTeamId ? Number(currentTeamId) : null,
+      contractMonthsRemaining:
+        contractMonthsRemaining === undefined ? null : Number(contractMonthsRemaining),
+      contractEndDate: contractEndDate || null,
+      preferredLeague: preferredLeague || null,
+      targetTeamId: targetTeamId ? Number(targetTeamId) : null,
+    });
+    const cachedPrediction = await getJson(cacheKey);
+
+    if (cachedPrediction) {
+      return res.status(201).json(cachedPrediction);
+    }
+
     const playerProfile = await footballService.getPlayerDetails(playerId);
     const resolvedCurrentTeamId = currentTeamId || playerProfile.player.team?.id;
     const teams = await footballService.getTeams({
@@ -24,13 +48,7 @@ exports.createTransferPrediction = async (req, res) => {
       league: preferredLeague,
       excludeTeamId: resolvedCurrentTeamId,
     });
-    const transferMarket = await footballService.getTransfers({
-      page: 1,
-      limit: 100,
-      club: playerProfile.player.team?.name,
-      league: preferredLeague,
-    });
-    const trendReport = aiService.buildTransferTrendReport(transferMarket.data);
+    const trendReport = aiService.buildTransferTrendReport([]);
     const targetTeamContext =
       targetTeamId && preferredLeague
         ? await footballService.getTeamDetails(targetTeamId, { league: preferredLeague })
@@ -51,6 +69,7 @@ exports.createTransferPrediction = async (req, res) => {
       }
     );
 
+    await setJson(cacheKey, prediction, AI_CACHE_TTL_SECONDS);
     res.status(201).json(prediction);
   } catch (error) {
     const status = error.statusCode || 500;
@@ -63,6 +82,17 @@ exports.createTransferPrediction = async (req, res) => {
 
 exports.getTeamAiReport = async (req, res) => {
   try {
+    const cacheKey = buildAiCacheKey("ai:team-report", {
+      teamId: Number(req.params.teamId),
+      league: req.query.league || null,
+      teamName: req.query.teamName || null,
+    });
+    const cachedReport = await getJson(cacheKey);
+
+    if (cachedReport) {
+      return res.json(cachedReport);
+    }
+
     const teamDetails = await footballService.getTeamDetails(
       req.params.teamId,
       req.query
@@ -73,6 +103,7 @@ exports.getTeamAiReport = async (req, res) => {
       teamDetails.transferHistory
     );
 
+    await setJson(cacheKey, report, AI_CACHE_TTL_SECONDS);
     res.json(report);
   } catch (error) {
     const status = error.statusCode || 500;
@@ -85,11 +116,21 @@ exports.getTeamAiReport = async (req, res) => {
 
 exports.getPlayerValuePrediction = async (req, res) => {
   try {
+    const cacheKey = buildAiCacheKey("ai:player-value", {
+      playerId: Number(req.params.playerId),
+    });
+    const cachedValueProjection = await getJson(cacheKey);
+
+    if (cachedValueProjection) {
+      return res.json(cachedValueProjection);
+    }
+
     const playerProfile = await footballService.getPlayerDetails(req.params.playerId);
     const valueProjection = aiService.calculatePlayerValueProjection(
       playerProfile.player
     );
 
+    await setJson(cacheKey, valueProjection, AI_CACHE_TTL_SECONDS);
     res.json(valueProjection);
   } catch (error) {
     const status = error.statusCode || 500;
@@ -102,13 +143,27 @@ exports.getPlayerValuePrediction = async (req, res) => {
 
 exports.getTransferTrends = async (req, res) => {
   try {
+    const cacheKey = buildAiCacheKey("ai:transfer-trends", {
+      page: Number(req.query.page || 1),
+      limit: Number(req.query.limit || 50),
+      league: req.query.league || null,
+    });
+    const cachedTrends = await getJson(cacheKey);
+
+    if (cachedTrends) {
+      return res.json(cachedTrends);
+    }
+
     const transfers = await footballService.getTransfers({
       page: req.query.page || 1,
       limit: req.query.limit || 50,
       league: req.query.league,
     });
 
-    res.json(aiService.buildTransferTrendReport(transfers.data));
+    const trendReport = aiService.buildTransferTrendReport(transfers.data);
+    await setJson(cacheKey, trendReport, AI_CACHE_TTL_SECONDS);
+
+    res.json(trendReport);
   } catch (error) {
     res.status(500).json({
       message: "Transfer trendleri üretilemedi.",

@@ -73,7 +73,7 @@ export default function DashboardPage() {
   const [loadingBase, setLoadingBase] = useState(true);
   const [loadingLeagueData, setLoadingLeagueData] = useState(true);
   const [loadingPrediction, setLoadingPrediction] = useState(true);
-  const [loadingAiPlayers, setLoadingAiPlayers] = useState(true);
+  const [loadingAiPlayers, setLoadingAiPlayers] = useState(false);
   const [favoriteTeamLoadingId, setFavoriteTeamLoadingId] = useState(null);
   const [aiTargetLeague, setAiTargetLeague] = useState("Premier League");
   const [aiTargetTeamId, setAiTargetTeamId] = useState("");
@@ -231,6 +231,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadAiPlayers() {
+      if (openAiPicker !== "player" && !aiPlayersCacheRef.current[aiSourceLeague]) {
+        setLoadingAiPlayers(false);
+        return;
+      }
+
       if (aiPlayersCacheRef.current[aiSourceLeague]) {
         const cachedPlayers = aiPlayersCacheRef.current[aiSourceLeague];
         setAiPlayers(cachedPlayers);
@@ -250,7 +255,7 @@ export default function DashboardPage() {
       setLoadingAiPlayers(true);
 
       try {
-        const nextPlayers = await fetchLeaguePlayers(aiSourceLeague, { limit: 1000 });
+        const nextPlayers = await fetchLeaguePlayers(aiSourceLeague, { limit: 100 });
 
         aiPlayersCacheRef.current[aiSourceLeague] = nextPlayers;
         setAiPlayers(nextPlayers);
@@ -274,7 +279,7 @@ export default function DashboardPage() {
     }
 
     loadAiPlayers();
-  }, [aiSourceLeague]);
+  }, [aiSourceLeague, openAiPicker]);
 
   useEffect(() => {
     async function loadAiTargetTeams() {
