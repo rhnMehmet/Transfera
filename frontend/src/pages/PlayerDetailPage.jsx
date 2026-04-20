@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import EntityImage from "../components/EntityImage";
 import api, { resolveLeagueMeta, storage } from "../services/api";
 import { getEntityImage, getInitials, getLeagueLogo } from "../services/brandAssets";
 import { formatEntityText } from "../services/textFormatter";
@@ -228,7 +229,11 @@ export default function PlayerDetailPage() {
           <div className="hero-title-with-mark">
             <div className="hero-mark hero-mark-player">
               {!loading && getEntityImage(player) ? (
-                <img src={getEntityImage(player)} alt={player?.name || "Oyuncu"} />
+                <EntityImage
+                  entity={player}
+                  name={player?.name || "Oyuncu"}
+                  alt={player?.name || "Oyuncu"}
+                />
               ) : leagueLogo ? (
                 <img
                   src={leagueLogo}
@@ -277,7 +282,7 @@ export default function PlayerDetailPage() {
               <div className="player-header-card">
                 <div className="entity-avatar entity-avatar-player entity-avatar-xl">
                   {getEntityImage(player) ? (
-                    <img src={getEntityImage(player)} alt={player.name} />
+                    <EntityImage entity={player} name={player.name} alt={player.name} />
                   ) : (
                     <span>{getInitials(player.name)}</span>
                   )}

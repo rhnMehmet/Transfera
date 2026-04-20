@@ -431,7 +431,13 @@ function mapPlayer(player, options = {}) {
     name: preferredName,
     firstname: player.firstname || null,
     lastname: player.lastname || null,
-    imagePath: player.image_path || null,
+    imagePath:
+      player.image_path ||
+      player.imagePath ||
+      player.photo_path ||
+      player.photoPath ||
+      player.avatar ||
+      null,
     age: computedAge,
     dateOfBirth: player.date_of_birth || null,
     position: player.position?.name || null,

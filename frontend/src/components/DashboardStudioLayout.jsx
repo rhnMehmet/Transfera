@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import EntityImage from "./EntityImage";
 import { getEntityImage, getLeagueLogo } from "../services/brandAssets";
 import { formatEntityText } from "../services/textFormatter";
 
@@ -396,7 +397,11 @@ export default function DashboardStudioLayout({
               <div className="studio-player-focus-card">
                 <div className="studio-player-avatar">
                   {selectedPlayerImage ? (
-                    <img src={selectedPlayerImage} alt={selectedPlayerName} />
+                    <EntityImage
+                      entity={selectedPlayer}
+                      name={selectedPlayerName}
+                      alt={selectedPlayerName}
+                    />
                   ) : (
                     getNameInitials(selectedPlayerName)
                   )}
