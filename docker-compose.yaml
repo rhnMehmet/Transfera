@@ -27,7 +27,13 @@ services:
     environment:
       PORT: 3000
       MONGODB_URI: mongodb://mongo:27017/transfera
+      REDIS_URL: redis://redis:6379
       ALLOWED_ORIGINS: http://localhost:5173
+      ENABLE_DEV_ADMIN_SEED: "true"
+      DEV_ADMIN_EMAIL: admin@test.com
+      DEV_ADMIN_PASSWORD: "123456"
+      DEV_ADMIN_NAME: Transfera
+      DEV_ADMIN_SURNAME: Admin
       JWT_SECRET: ${JWT_SECRET:-transfera_dev_secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       SPORTMONKS_API_TOKEN: ${SPORTMONKS_API_TOKEN:-}
@@ -40,6 +46,7 @@ services:
     command: npm run dev
     depends_on:
       - mongo
+      - redis
     restart: unless-stopped
 
   mongo:
@@ -51,5 +58,16 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: transfera_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   mongo_data:
+  redis_data:

@@ -20,13 +20,14 @@ Jenkins arayuzu:
 
 - `http://localhost:8080`
 
-## Ilk Giris
+## Ilk Giris  
 
 Ilk admin sifresini almak icin:
 
 ```powershell
 docker exec transfera_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
+
 
 Sonra:
 

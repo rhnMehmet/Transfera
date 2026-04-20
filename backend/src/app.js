@@ -13,6 +13,8 @@ const transferRoutes = require("./routes/transferRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const { ensureDevAdmin } = require("./services/devAdminSeed");
+const { ensureRedisConnection, isRedisAvailable } = require("./services/redisClient");
 const { ensureDatabaseConnection, isDatabaseAvailable } = require("./utils/database");
 
 const app = express();
@@ -21,13 +23,38 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+function isLocalDevOrigin(origin) {
+  if (!origin) {
+    return false;
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return true;
+  }
+
+  if ((process.env.NODE_ENV || "development") !== "production" && isLocalDevOrigin(origin)) {
+    return true;
+  }
+
+  return false;
+}
+
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 const hasFrontendBuild = fs.existsSync(frontendDistPath);
 
 app.use( 
   cors({
     origin(origin, callback) {
-      if (!origin || !ALLOWED_ORIGINS.length || ALLOWED_ORIGINS.includes(origin)) {
+      if (!origin || !ALLOWED_ORIGINS.length || isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
@@ -67,6 +94,7 @@ function buildHealthPayload() {
     status: isDatabaseAvailable() ? "ok" : "degraded",
     version: "1.0.0",
     database: isDatabaseAvailable() ? "connected" : "disconnected",
+    redis: isRedisAvailable() ? "connected" : "disconnected",
   };
 }
 
@@ -121,6 +149,7 @@ async function startServer() {
 
   try {
     await ensureDatabaseConnection();
+    await ensureDevAdmin();
     console.log("MongoDB baglandi.");
   } catch (error) {
     console.error(
@@ -128,6 +157,8 @@ async function startServer() {
       error.message
     );
   }
+
+  await ensureRedisConnection();
 }
 
 mongoose.connection.on("connected", () => {
@@ -145,6 +176,22 @@ mongoose.connection.on("error", (error) => {
 ensureDatabaseConnection().catch((error) => {
   console.error(
     "Ilk MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
+    error.message
+  );
+});
+
+ensureDatabaseConnection()
+  .then(() => ensureDevAdmin())
+  .catch((error) => {
+    console.error(
+      "Varsayilan gelistirme admin hesabi hazirlanamadi:",
+      error.message
+    );
+  });
+
+ensureRedisConnection().catch((error) => {
+  console.error(
+    "Ilk Redis baglantisi kurulamadi, cache ozellikleri sinirli modda calisiyor:",
     error.message
   );
 });

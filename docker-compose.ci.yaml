@@ -18,6 +18,7 @@ services:
     environment:
       PORT: 3000
       MONGODB_URI: mongodb://mongo:27017/transfera
+      REDIS_URL: redis://redis:6379
       ALLOWED_ORIGINS: http://localhost:5173
       JWT_SECRET: ${JWT_SECRET:-transfera_dev_secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
@@ -28,6 +29,7 @@ services:
     command: npm run dev
     depends_on:
       - mongo
+      - redis
     restart: unless-stopped
 
   mongo:
@@ -36,5 +38,13 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   mongo_data:
+  redis_data:
