@@ -576,7 +576,7 @@ export default function DashboardStudioLayout({
                       {loadingAiTeams ? (
                         <p className="studio-empty-note">Takımlar yükleniyor...</p>
                       ) : visibleAiTargetTeams.length ? (
-                        visibleAiTargetTeams.slice(0, 16).map((team) => (
+                        visibleAiTargetTeams.map((team) => (
                           <button
                             key={team.id}
                             type="button"

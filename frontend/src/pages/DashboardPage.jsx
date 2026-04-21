@@ -61,6 +61,14 @@ function formatMillionValue(value) {
   return `${numeric.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1")} M EUR`;
 }
 
+function normalizeSearch(value) {
+  return String(value || "").toLocaleLowerCase("tr");
+}
+
+function includesSearch(value, query) {
+  return normalizeSearch(value).includes(query);
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [data, setData] = useState(initialState);
@@ -255,7 +263,7 @@ export default function DashboardPage() {
       setLoadingAiPlayers(true);
 
       try {
-        const nextPlayers = await fetchLeaguePlayers(aiSourceLeague, { limit: 100 });
+        const nextPlayers = await fetchLeaguePlayers(aiSourceLeague, { limit: 1000 });
 
         aiPlayersCacheRef.current[aiSourceLeague] = nextPlayers;
         setAiPlayers(nextPlayers);
@@ -413,14 +421,33 @@ export default function DashboardPage() {
   const selectedAiTargetTeam = aiTargetTeams.find(
     (team) => String(team.id) === String(aiTargetTeamId)
   );
-  const visibleAiPlayers = aiPlayers
-    .filter((player) =>
-      player.name.toLowerCase().includes(aiPlayerSearch.toLowerCase())
+  const playerSearchQuery = normalizeSearch(aiPlayerSearch.trim());
+  const targetTeamSearchQuery = normalizeSearch(aiTargetTeamSearch.trim());
+  const visibleAiPlayers = aiPlayers.filter((player) => {
+    if (!playerSearchQuery) {
+      return true;
+    }
+
+    return (
+      includesSearch(player.name, playerSearchQuery) ||
+      includesSearch(player.teamName, playerSearchQuery) ||
+      includesSearch(player.team?.name, playerSearchQuery) ||
+      includesSearch(player.leagueName, playerSearchQuery) ||
+      includesSearch(player.league, playerSearchQuery) ||
+      includesSearch(player.position, playerSearchQuery)
     );
-  const visibleAiTargetTeams = aiTargetTeams
-    .filter((team) =>
-      team.name.toLowerCase().includes(aiTargetTeamSearch.toLowerCase())
+  });
+  const visibleAiTargetTeams = aiTargetTeams.filter((team) => {
+    if (!targetTeamSearchQuery) {
+      return true;
+    }
+
+    return (
+      includesSearch(team.name, targetTeamSearchQuery) ||
+      includesSearch(team.league, targetTeamSearchQuery) ||
+      includesSearch(team.country, targetTeamSearchQuery)
     );
+  });
   const favoriteCount = data.favoriteTeams.length + data.favoritePlayers.length;
 
   return (
