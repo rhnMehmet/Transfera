@@ -568,9 +568,19 @@ exports.removeFavoriteTeam = async (req, res) => {
 
     user.favorites.teams = user.favorites.teams.filter((id) => id !== teamId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.team.removed", {
+      userId: user._id.toString(),
+      teamId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.json({
       message: "Favori takim silindi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {

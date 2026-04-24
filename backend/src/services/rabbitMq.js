@@ -9,6 +9,7 @@ const DOMAIN_EVENTS_PATTERNS = [
   "user.registered",
   "favorite.player.added",
   "favorite.team.added",
+  "favorite.team.removed",
 ];
 
 let connection = null;
