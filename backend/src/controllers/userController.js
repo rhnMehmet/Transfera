@@ -16,6 +16,7 @@ const {
   setJson,
   setValue,
 } = require("../services/redisClient");
+const { publishDomainEvent } = require("../services/rabbitMq");
 
 const JWT_SECRET = process.env.JWT_SECRET || "transfera-dev-secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
@@ -135,10 +136,19 @@ exports.register = async (req, res) => {
     });
 
     const token = createToken(user);
+    const eventPublished = await publishDomainEvent("user.registered", {
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      surname: user.surname,
+      role: user.role,
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
       message: "Kullanici kaydi basarili.",
       token,
+      eventPublished,
       user: sanitizeUser(user),
     });
   } catch (error) {
@@ -435,9 +445,19 @@ exports.addFavoritePlayer = async (req, res) => {
 
     user.favorites.players.push(parsedPlayerId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.player.added", {
+      userId: user._id.toString(),
+      playerId: parsedPlayerId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
       message: "Favori oyuncu eklendi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {
@@ -507,9 +527,19 @@ exports.addFavoriteTeam = async (req, res) => {
 
     user.favorites.teams.push(parsedTeamId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.team.added", {
+      userId: user._id.toString(),
+      teamId: parsedTeamId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
       message: "Favori takim eklendi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {

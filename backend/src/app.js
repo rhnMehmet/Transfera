@@ -15,6 +15,12 @@ const commentRoutes = require("./routes/commentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const { ensureDevAdmin } = require("./services/devAdminSeed");
 const { ensureRedisConnection, isRedisAvailable } = require("./services/redisClient");
+const {
+  ensureRabbitConnection,
+  isRabbitAvailable,
+  startDomainEventConsumers,
+} = require("./services/rabbitMq");
+const { processDomainEvent } = require("./services/domainEventProcessor");
 const { ensureDatabaseConnection, isDatabaseAvailable } = require("./utils/database");
 
 const app = express();
@@ -95,6 +101,7 @@ function buildHealthPayload() {
     version: "1.0.0",
     database: isDatabaseAvailable() ? "connected" : "disconnected",
     redis: isRedisAvailable() ? "connected" : "disconnected",
+    rabbitmq: isRabbitAvailable() ? "connected" : "disconnected",
   };
 }
 
@@ -159,6 +166,8 @@ async function startServer() {
   }
 
   await ensureRedisConnection();
+  await ensureRabbitConnection();
+  await startDomainEventConsumers(processDomainEvent);
 }
 
 mongoose.connection.on("connected", () => {
@@ -195,6 +204,21 @@ ensureRedisConnection().catch((error) => {
     error.message
   );
 });
+
+ensureRabbitConnection()
+  .then((rabbit) => {
+    if (!rabbit) {
+      return null;
+    }
+
+    return startDomainEventConsumers(processDomainEvent);
+  })
+  .catch((error) => {
+    console.error(
+      "Ilk RabbitMQ baglantisi kurulamadi, event ozellikleri sinirli modda calisiyor:",
+      error.message
+    );
+  });
 
 if (require.main === module) {
   startServer();

@@ -28,6 +28,7 @@ services:
       PORT: 3000
       MONGODB_URI: mongodb://mongo:27017/transfera
       REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
       ALLOWED_ORIGINS: http://localhost:5173
       ENABLE_DEV_ADMIN_SEED: "true"
       DEV_ADMIN_EMAIL: admin@test.com
@@ -47,6 +48,7 @@ services:
     depends_on:
       - mongo
       - redis
+      - rabbitmq
     restart: unless-stopped
 
   mongo:
@@ -66,6 +68,14 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: transfera_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     restart: unless-stopped
 
 volumes:
