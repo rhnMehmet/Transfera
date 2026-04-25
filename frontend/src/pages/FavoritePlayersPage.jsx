@@ -129,6 +129,8 @@ export default function FavoritePlayersPage() {
               },
             ]
       );
+      setSearch("");
+      setResults([]);
       setFeedback("Oyuncu favorilere eklendi.");
     } catch (error) {
       setFeedback(error.response?.data?.message || "Oyuncu eklenemedi.");

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, {
   fetchLeaguePlayers,
@@ -38,6 +38,10 @@ const LEAGUE_ROUTE_MAP = {
   "Ligue 1": "ligue-1",
 };
 
+const DEFAULT_PLAYER_ID = 6983809;
+const DEFAULT_SOURCE_LEAGUE = "Bundesliga";
+const DEFAULT_TARGET_LEAGUE = "Premier League";
+
 function formatContractPressure(value) {
   if (value === "high") {
     return "Yüksek";
@@ -49,16 +53,6 @@ function formatContractPressure(value) {
     return "Düşük";
   }
   return "Bilinmiyor";
-}
-
-function formatMillionValue(value) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return `${numeric.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1")} M EUR`;
 }
 
 function normalizeSearch(value) {
@@ -73,9 +67,9 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [data, setData] = useState(initialState);
   const [profile, setProfile] = useState(storage.getUser());
-  const [selectedPlayerId, setSelectedPlayerId] = useState(6983809);
-  const [selectedLeague, setSelectedLeague] = useState("Premier League");
-  const [aiSourceLeague, setAiSourceLeague] = useState("Premier League");
+  const [selectedPlayerId, setSelectedPlayerId] = useState(DEFAULT_PLAYER_ID);
+  const [selectedLeague, setSelectedLeague] = useState(DEFAULT_SOURCE_LEAGUE);
+  const [aiSourceLeague, setAiSourceLeague] = useState(DEFAULT_SOURCE_LEAGUE);
   const [teamSearch, setTeamSearch] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loadingBase, setLoadingBase] = useState(true);
@@ -83,7 +77,7 @@ export default function DashboardPage() {
   const [loadingPrediction, setLoadingPrediction] = useState(true);
   const [loadingAiPlayers, setLoadingAiPlayers] = useState(false);
   const [favoriteTeamLoadingId, setFavoriteTeamLoadingId] = useState(null);
-  const [aiTargetLeague, setAiTargetLeague] = useState("Premier League");
+  const [aiTargetLeague, setAiTargetLeague] = useState(DEFAULT_TARGET_LEAGUE);
   const [aiTargetTeamId, setAiTargetTeamId] = useState("");
   const [aiTargetTeams, setAiTargetTeams] = useState([]);
   const [aiPlayers, setAiPlayers] = useState([]);
@@ -239,11 +233,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadAiPlayers() {
-      if (openAiPicker !== "player" && !aiPlayersCacheRef.current[aiSourceLeague]) {
-        setLoadingAiPlayers(false);
-        return;
-      }
-
       if (aiPlayersCacheRef.current[aiSourceLeague]) {
         const cachedPlayers = aiPlayersCacheRef.current[aiSourceLeague];
         setAiPlayers(cachedPlayers);

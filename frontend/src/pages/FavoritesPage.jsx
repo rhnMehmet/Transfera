@@ -229,6 +229,7 @@ export default function FavoritesPage() {
           ? current
           : [...current, normalizedTeam]
       );
+      setTeamSearch("");
       setFeedback("Takım favorilere eklendi.");
     } catch (error) {
       setFeedback(error.response?.data?.message || "Takım eklenemedi.");
@@ -273,6 +274,7 @@ export default function FavoritesPage() {
           ? current
           : [...current, player]
       );
+      setPlayerSearch("");
       setFeedback("Oyuncu favorilere eklendi.");
     } catch (error) {
       setFeedback(error.response?.data?.message || "Oyuncu eklenemedi.");

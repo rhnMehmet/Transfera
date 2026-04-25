@@ -281,13 +281,21 @@ export default function ProfilePage() {
 
   return (
     <main className="dashboard-page">
-      <section className="dashboard-hero">
-        <div>
+      <section className="dashboard-hero profile-hero">
+        <div className="profile-hero-copy">
           <span className="eyebrow">PROFİL YÖNETİMİ</span>
-          <h1>Profilini ve yorumlarını yönet</h1>
-          <p>E-posta, şifre ve daha önce yazdığın yorumlar tek sayfada.</p>
+          <h1>Profil ve yorum merkezi</h1>
+          <p>Hesap bilgilerini, bildirim tercihlerini ve yorum geçmişini tek ekrandan yönet.</p>
         </div>
-        <div className="hero-actions">
+        <div className="profile-hero-side">
+          <div className="profile-hero-avatar">
+            {`${profile?.name?.[0] || "T"}${profile?.surname?.[0] || ""}`.toUpperCase()}
+          </div>
+          <div className="profile-hero-identity">
+            <span>Aktif profil</span>
+            <strong>{`${profile?.name || "Transfera"} ${profile?.surname || "Kullanıcısı"}`}</strong>
+            <small>{profile?.email || "E-posta bilgisi bekleniyor"}</small>
+          </div>
           <Link to="/dashboard" className="button-secondary">
             Dashboard&apos;a Dön
           </Link>

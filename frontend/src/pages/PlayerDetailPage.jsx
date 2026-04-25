@@ -3,45 +3,8 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import EntityImage from "../components/EntityImage";
 import api, { resolveLeagueMeta, storage } from "../services/api";
 import { getEntityImage, getInitials, getLeagueLogo } from "../services/brandAssets";
+import { formatCurrencyValue, formatMillionValue } from "../services/currencyFormatter";
 import { formatEntityText } from "../services/textFormatter";
-
-function trimNumber(value) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return numeric.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
-}
-
-function formatMillionValue(value) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return `${trimNumber(numeric)}M EUR`;
-}
-
-function formatTransferCurrency(amount) {
-  const numeric = Number(amount);
-
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  if (Math.abs(numeric) >= 1_000_000) {
-    return `${trimNumber(numeric / 1_000_000)}M EUR`;
-  }
-
-  if (Math.abs(numeric) >= 1_000) {
-    return `${trimNumber(numeric / 1_000)}K EUR`;
-  }
-
-  return `${trimNumber(numeric)} EUR`;
-}
 
 function normalizeName(value) {
   return formatEntityText(value || "")
@@ -58,9 +21,14 @@ function formatTransferRoute(transfer) {
 }
 
 function resolveTransferFee(transfer, history = []) {
-  const directAmount = formatTransferCurrency(transfer.amount);
-  if (directAmount) {
-    return directAmount;
+  const directAmount = Number(transfer.amount);
+  if (transfer.amount != null && transfer.amount !== "" && Number.isFinite(directAmount)) {
+    return formatCurrencyValue(directAmount);
+  }
+
+  const formattedAmount = transfer.amount || transfer.fee || transfer.value;
+  if (formattedAmount) {
+    return formatEntityText(formattedAmount);
   }
 
   const transferDate = transfer.date || "";
@@ -435,7 +403,7 @@ export default function PlayerDetailPage() {
             </div>
           </section>
 
-          <section className="panel panel-highlight" style={{ marginTop: 24 }}>
+          <section className="panel panel-highlight player-value-projection" style={{ marginTop: 24 }}>
             <div className="panel-head">
               <div>
                 <span>AI Oyuncu Değer Tahmini</span>
@@ -465,7 +433,7 @@ export default function PlayerDetailPage() {
               </div>
             </div>
 
-            <div className="ai-text-panel" style={{ marginTop: 18 }}>
+            <div className="ai-text-panel player-value-notes" style={{ marginTop: 18 }}>
               <p className="panel-subcopy">
                 {formatEntityText(
                   aiValuePrediction?.aiReport?.headline ||
