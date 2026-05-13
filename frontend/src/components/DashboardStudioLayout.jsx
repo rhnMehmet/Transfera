@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+import EntityImage from "./EntityImage";
 import { getEntityImage, getLeagueLogo } from "../services/brandAssets";
+import { formatMillionValue } from "../services/currencyFormatter";
 import { formatEntityText } from "../services/textFormatter";
 
 const MOJIBAKE_REPLACEMENTS = [
@@ -41,26 +43,6 @@ const QUESTION_REPLACEMENTS = [
 
 function clamp(value, min = 0, max = 100) {
   return Math.min(max, Math.max(min, Number(value) || 0));
-}
-
-function trimNumber(value) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return numeric.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
-}
-
-function formatMillionValue(value) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return `${trimNumber(numeric)} M EUR`;
 }
 
 function sanitizeDisplayText(value) {
@@ -296,6 +278,20 @@ export default function DashboardStudioLayout({
     }
   }
 
+  function handlePlayerDetailNavigate() {
+    if (!selectedPlayerId) {
+      return;
+    }
+
+    navigate(`/players/${selectedPlayerId}`, {
+      state: {
+        leagueName: selectedPlayer?.team?.league || selectedPlayer?.league || aiSourceLeague,
+        teamName: selectedPlayer?.team?.name || selectedPlayer?.teamName || null,
+        returnTo: "/dashboard",
+      },
+    });
+  }
+
   const fallbackFactors = [
     {
       label: "Lig uyumu",
@@ -394,13 +390,23 @@ export default function DashboardStudioLayout({
               </div>
 
               <div className="studio-player-focus-card">
-                <div className="studio-player-avatar">
+                <button
+                  type="button"
+                  className="studio-player-avatar studio-player-avatar-button"
+                  onClick={handlePlayerDetailNavigate}
+                  disabled={!selectedPlayerId}
+                  aria-label={`${selectedPlayerName} detay sayfasını aç`}
+                >
                   {selectedPlayerImage ? (
-                    <img src={selectedPlayerImage} alt={selectedPlayerName} />
+                    <EntityImage
+                      entity={selectedPlayer}
+                      name={selectedPlayerName}
+                      alt={selectedPlayerName}
+                    />
                   ) : (
                     getNameInitials(selectedPlayerName)
                   )}
-                </div>
+                </button>
                 <div className="studio-player-copy">
                   <p>Seçili oyuncu</p>
                   <h3>{selectedPlayerName}</h3>
@@ -571,7 +577,7 @@ export default function DashboardStudioLayout({
                       {loadingAiTeams ? (
                         <p className="studio-empty-note">Takımlar yükleniyor...</p>
                       ) : visibleAiTargetTeams.length ? (
-                        visibleAiTargetTeams.slice(0, 16).map((team) => (
+                        visibleAiTargetTeams.map((team) => (
                           <button
                             key={team.id}
                             type="button"

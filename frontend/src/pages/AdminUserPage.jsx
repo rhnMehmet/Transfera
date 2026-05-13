@@ -171,6 +171,7 @@ export default function AdminUserPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   useEffect(() => {
     const currentUser = storage.getUser();
@@ -600,6 +601,30 @@ export default function AdminUserPage() {
     }
   }
 
+  async function handleDeleteUser() {
+    const confirmed = window.confirm(
+      "Bu kullanıcı kalıcı olarak silinsin mi?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingUser(true);
+    resetMessages();
+
+    try {
+      await api.delete(`/users/${userId}`);
+      navigate("/admin", { replace: true });
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message || "Kullanıcı silinemedi."
+      );
+    } finally {
+      setDeletingUser(false);
+    }
+  }
+
   const visiblePlayerSearchResults = playerSearchResults.filter(
     (player) =>
       !favoritePlayers.some((favorite) => Number(favorite.id) === Number(player.id))
@@ -651,6 +676,13 @@ export default function AdminUserPage() {
           <div className="admin-hero-actions admin-hero-actions-vertical">
             <button className="button-secondary wide" onClick={handleGoBack}>
               Geri Git
+            </button>
+            <button
+              className="button-primary wide"
+              onClick={handleDeleteUser}
+              disabled={deletingUser}
+            >
+              {deletingUser ? "Siliniyor..." : "Kullanıcıyı Sil"}
             </button>
           </div>
 

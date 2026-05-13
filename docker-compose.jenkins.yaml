@@ -1,0 +1,19 @@
+services:
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: transfera_jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/var/jenkins_home/workspace/Transfera
+    working_dir: /var/jenkins_home/workspace/Transfera
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:

@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
@@ -8,21 +9,43 @@ const {
   isDatabaseAvailable,
   buildDatabaseUnavailablePayload,
 } = require("../utils/database");
+const {
+  getBlacklistKey,
+  getDefaultSessionTtlSeconds,
+  getSessionKey,
+  setJson,
+  setValue,
+} = require("../services/redisClient");
+const { publishDomainEvent } = require("../services/rabbitMq");
 
 const JWT_SECRET = process.env.JWT_SECRET || "transfera-dev-secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 
 function sanitizeUser(user) {
+  const source = typeof user?.toObject === "function" ? user.toObject() : user;
+  const resolvedId = source?.id || source?._id || null;
+
   return {
-    id: user._id,
-    name: user.name,
-    surname: user.surname,
-    email: user.email,
-    role: user.role,
-    favorites: user.favorites,
-    notificationPreferences: user.notificationPreferences,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    id: resolvedId ? resolvedId.toString() : null,
+    name: source?.name,
+    surname: source?.surname,
+    email: source?.email,
+    role: source?.role,
+    favorites: {
+      players: Array.isArray(source?.favorites?.players)
+        ? source.favorites.players
+        : [],
+      teams: Array.isArray(source?.favorites?.teams)
+        ? source.favorites.teams
+        : [],
+    },
+    notificationPreferences: {
+      transferUpdates: source?.notificationPreferences?.transferUpdates ?? true,
+      matchAlerts: source?.notificationPreferences?.matchAlerts ?? true,
+      newsletter: source?.notificationPreferences?.newsletter ?? false,
+    },
+    createdAt: source?.createdAt || null,
+    updatedAt: source?.updatedAt || null,
   };
 }
 
@@ -34,13 +57,24 @@ function createToken(user) {
       email: user.email,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      jwtid: crypto.randomUUID(),
+    }
   );
+}
+
+function resolveTokenTtlSeconds(decodedToken) {
+  if (!decodedToken?.exp) {
+    return getDefaultSessionTtlSeconds();
+  }
+
+  return Math.max(decodedToken.exp - Math.floor(Date.now() / 1000), 1);
 }
 
 function buildFallbackProfile(req) {
   const email = req.user?.email || req.auth?.email || "";
-  const fallbackName = email ? email.split("@")[0] : "Kullanıcı";
+  const fallbackName = email ? email.split("@")[0] : "Kullanici";
 
   return {
     id: req.params.id || req.user?.id || req.auth?.id || null,
@@ -72,7 +106,7 @@ exports.register = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Kayıt işlemi için veritabanı bağlantısı gerekli."
+        "Kayit islemi icin veritabani baglantisi gerekli."
       );
     }
 
@@ -80,7 +114,7 @@ exports.register = async (req, res) => {
 
     if (!name || !surname || !email || !password) {
       return res.status(400).json({
-        message: "Ad, soyad, e-posta ve şifre zorunludur.",
+        message: "Ad, soyad, e-posta ve sifre zorunludur.",
       });
     }
 
@@ -89,7 +123,7 @@ exports.register = async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json({
-        message: "Bu e-posta adresi ile daha önce kayıt olunmuş.",
+        message: "Bu e-posta adresi ile daha once kayit olunmus.",
       });
     }
 
@@ -102,15 +136,24 @@ exports.register = async (req, res) => {
     });
 
     const token = createToken(user);
+    const eventPublished = await publishDomainEvent("user.registered", {
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      surname: user.surname,
+      role: user.role,
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
-      message: "Kullanıcı kaydı başarılı.",
+      message: "Kullanici kaydi basarili.",
       token,
+      eventPublished,
       user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({
-      message: "Kullanıcı kaydı sırasında hata oluştu.",
+      message: "Kullanici kaydi sirasinda hata olustu.",
       error: error.message,
     });
   }
@@ -121,7 +164,7 @@ exports.login = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Giriş işlemi için veritabanı bağlantısı gerekli."
+        "Giris islemi icin veritabani baglantisi gerekli."
       );
     }
 
@@ -129,7 +172,7 @@ exports.login = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "E-posta ve şifre zorunludur.",
+        message: "E-posta ve sifre zorunludur.",
       });
     }
 
@@ -138,27 +181,42 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "E-posta veya şifre hatalı.",
+        message: "E-posta veya sifre hatali.",
       });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
-        message: "E-posta veya şifre hatalı.",
+        message: "E-posta veya sifre hatali.",
       });
     }
 
     const token = createToken(user);
+    const decodedToken = jwt.decode(token);
+    const sessionTtl = resolveTokenTtlSeconds(decodedToken);
+
+    if (decodedToken?.jti) {
+      await setJson(
+        getSessionKey(user._id.toString(), decodedToken.jti),
+        {
+          userId: user._id.toString(),
+          email: user.email,
+          role: user.role,
+          createdAt: new Date().toISOString(),
+        },
+        sessionTtl
+      );
+    }
 
     res.json({
-      message: "Giriş başarılı.",
+      message: "Giris basarili.",
       token,
       user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({
-      message: "Giriş sırasında hata oluştu.",
+      message: "Giris sirasinda hata olustu.",
       error: error.message,
     });
   }
@@ -169,7 +227,7 @@ exports.logout = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Çıkış işlemi için veritabanı bağlantısı gerekli."
+        "Cikis islemi icin veritabani baglantisi gerekli."
       );
     }
 
@@ -182,13 +240,20 @@ exports.logout = async (req, res) => {
       return res.status(400).json({ message: "Bearer token gerekli." });
     }
 
-    const expiresAt = req.auth && req.auth.exp ? new Date(req.auth.exp * 1000) : null;
-    await TokenBlacklist.create({ token, expiresAt });
+    const decodedToken = req.auth || jwt.decode(token);
+    const expiresAt = decodedToken?.exp ? new Date(decodedToken.exp * 1000) : null;
+    const blacklistTtl = resolveTokenTtlSeconds(decodedToken);
 
-    res.json({ message: "Oturum sonlandırıldı." });
+    if (decodedToken?.jti) {
+      await setValue(getBlacklistKey(decodedToken.jti), "1", blacklistTtl);
+    } else {
+      await TokenBlacklist.create({ token, expiresAt });
+    }
+
+    res.json({ message: "Oturum sonlandirildi." });
   } catch (error) {
     res.status(500).json({
-      message: "Çıkış yapılırken hata oluştu.",
+      message: "Cikis yapilirken hata olustu.",
       error: error.message,
     });
   }
@@ -200,20 +265,21 @@ exports.getProfile = async (req, res) => {
       return res.json({
         user: buildFallbackProfile(req),
         degradedMode: true,
-        message: "Veritabanı bağlantısı yok. Sınırlı profil bilgisi gösteriliyor.",
+        message:
+          "Veritabani baglantisi yok. Sinirli profil bilgisi gosteriliyor.",
       });
     }
 
     const user = await User.findById(req.params.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
-    res.json({ user });
+    res.json({ user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({
-      message: "Profil bilgileri alınamadı.",
+      message: "Profil bilgileri alinamadi.",
       error: error.message,
     });
   }
@@ -224,7 +290,7 @@ exports.updateProfile = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Profil güncellemek için veritabanı bağlantısı gerekli."
+        "Profil guncellemek icin veritabani baglantisi gerekli."
       );
     }
 
@@ -248,7 +314,8 @@ exports.updateProfile = async (req, res) => {
 
       if (duplicateUser) {
         return res.status(409).json({
-          message: "Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor.",
+          message:
+            "Bu e-posta adresi baska bir kullanici tarafindan kullaniliyor.",
         });
       }
 
@@ -261,16 +328,16 @@ exports.updateProfile = async (req, res) => {
     }).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     res.json({
-      message: "Profil güncellendi.",
-      user,
+      message: "Profil guncellendi.",
+      user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({
-      message: "Profil güncellenemedi.",
+      message: "Profil guncellenemedi.",
       error: error.message,
     });
   }
@@ -281,7 +348,7 @@ exports.changePassword = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Şifre güncellemek için veritabanı bağlantısı gerekli."
+        "Sifre guncellemek icin veritabani baglantisi gerekli."
       );
     }
 
@@ -290,26 +357,26 @@ exports.changePassword = async (req, res) => {
 
     if (!newPassword) {
       return res.status(400).json({
-        message: "Yeni şifre zorunludur.",
+        message: "Yeni sifre zorunludur.",
       });
     }
 
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     if (!isAdminAction) {
       if (!currentPassword) {
         return res.status(400).json({
-          message: "Mevcut şifre zorunludur.",
+          message: "Mevcut sifre zorunludur.",
         });
       }
 
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
         return res.status(401).json({
-          message: "Mevcut şifre doğrulanamadı.",
+          message: "Mevcut sifre dogrulanamadi.",
         });
       }
     }
@@ -317,10 +384,10 @@ exports.changePassword = async (req, res) => {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ message: "Şifre başarıyla güncellendi." });
+    res.json({ message: "Sifre basariyla guncellendi." });
   } catch (error) {
     res.status(500).json({
-      message: "Şifre güncellenemedi.",
+      message: "Sifre guncellenemedi.",
       error: error.message,
     });
   }
@@ -331,14 +398,14 @@ exports.deleteAccount = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Hesap silmek için veritabanı bağlantısı gerekli."
+        "Hesap silmek icin veritabani baglantisi gerekli."
       );
     }
 
     const deletedUser = await User.findByIdAndDelete(req.params.id);
 
     if (!deletedUser) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     res.json({ message: "Hesap kalici olarak silindi." });
@@ -355,7 +422,7 @@ exports.addFavoritePlayer = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Favori oyuncu eklemek için veritabanı bağlantısı gerekli."
+        "Favori oyuncu eklemek icin veritabani baglantisi gerekli."
       );
     }
 
@@ -366,21 +433,31 @@ exports.addFavoritePlayer = async (req, res) => {
 
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     const parsedPlayerId = Number(playerId);
     if (user.favorites.players.includes(parsedPlayerId)) {
       return res.status(409).json({
-        message: "Oyuncu zaten favorilere eklenmiş.",
+        message: "Oyuncu zaten favorilere eklenmis.",
       });
     }
 
     user.favorites.players.push(parsedPlayerId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.player.added", {
+      userId: user._id.toString(),
+      playerId: parsedPlayerId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
       message: "Favori oyuncu eklendi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {
@@ -396,7 +473,7 @@ exports.removeFavoritePlayer = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Favori oyuncu kaldırmak için veritabanı bağlantısı gerekli."
+        "Favori oyuncu kaldirmak icin veritabani baglantisi gerekli."
       );
     }
 
@@ -404,7 +481,7 @@ exports.removeFavoritePlayer = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     user.favorites.players = user.favorites.players.filter((id) => id !== playerId);
@@ -427,7 +504,7 @@ exports.addFavoriteTeam = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Favori takım eklemek için veritabanı bağlantısı gerekli."
+        "Favori takim eklemek icin veritabani baglantisi gerekli."
       );
     }
 
@@ -438,26 +515,36 @@ exports.addFavoriteTeam = async (req, res) => {
 
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     const parsedTeamId = Number(teamId);
     if (user.favorites.teams.includes(parsedTeamId)) {
       return res.status(409).json({
-        message: "Takım zaten favorilere eklenmiş.",
+        message: "Takim zaten favorilere eklenmis.",
       });
     }
 
     user.favorites.teams.push(parsedTeamId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.team.added", {
+      userId: user._id.toString(),
+      teamId: parsedTeamId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.status(201).json({
-      message: "Favori takım eklendi.",
+      message: "Favori takim eklendi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {
     res.status(500).json({
-      message: "Favori takım eklenemedi.",
+      message: "Favori takim eklenemedi.",
       error: error.message,
     });
   }
@@ -468,7 +555,7 @@ exports.removeFavoriteTeam = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Favori takım kaldırmak için veritabanı bağlantısı gerekli."
+        "Favori takim kaldirmak icin veritabani baglantisi gerekli."
       );
     }
 
@@ -476,19 +563,29 @@ exports.removeFavoriteTeam = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     user.favorites.teams = user.favorites.teams.filter((id) => id !== teamId);
     await user.save();
+    const eventPublished = await publishDomainEvent("favorite.team.removed", {
+      userId: user._id.toString(),
+      teamId,
+      favorites: {
+        players: user.favorites.players,
+        teams: user.favorites.teams,
+      },
+      occurredAt: new Date().toISOString(),
+    });
 
     res.json({
-      message: "Favori takım silindi.",
+      message: "Favori takim silindi.",
+      eventPublished,
       favorites: user.favorites,
     });
   } catch (error) {
     res.status(500).json({
-      message: "Favori takım silinemedi.",
+      message: "Favori takim silinemedi.",
       error: error.message,
     });
   }
@@ -499,7 +596,7 @@ exports.updateNotificationPreferences = async (req, res) => {
     if (!isDatabaseAvailable()) {
       return sendDatabaseUnavailable(
         res,
-        "Bildirim tercihlerini güncellemek için veritabanı bağlantısı gerekli."
+        "Bildirim tercihlerini guncellemek icin veritabani baglantisi gerekli."
       );
     }
 
@@ -507,7 +604,7 @@ exports.updateNotificationPreferences = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+      return res.status(404).json({ message: "Kullanici bulunamadi." });
     }
 
     if (typeof transferUpdates === "boolean") {
@@ -525,12 +622,12 @@ exports.updateNotificationPreferences = async (req, res) => {
     await user.save();
 
     res.json({
-      message: "Bildirim tercihleri güncellendi.",
+      message: "Bildirim tercihleri guncellendi.",
       notificationPreferences: user.notificationPreferences,
     });
   } catch (error) {
     res.status(500).json({
-      message: "Bildirim tercihleri güncellenemedi.",
+      message: "Bildirim tercihleri guncellenemedi.",
       error: error.message,
     });
   }
@@ -556,7 +653,7 @@ exports.listUserComments = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Kullanıcı yorumları alınamadı.",
+      message: "Kullanici yorumlari alinamadi.",
       error: error.message,
     });
   }
@@ -616,7 +713,6 @@ exports.listUsersForAdmin = async (req, res) => {
       };
     });
 
-    
     res.json({
       data,
       summary: {
@@ -627,7 +723,7 @@ exports.listUsersForAdmin = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Admin kullanıcı listesi alınamadı.",
+      message: "Admin kullanici listesi alinamadi.",
       error: error.message,
     });
   }

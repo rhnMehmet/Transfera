@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 const TokenBlacklist = require("../models/TokenBlacklist");
+const { getBlacklistKey, getValue } = require("../services/redisClient");
 const { isDatabaseAvailable } = require("../utils/database");
 
 const JWT_SECRET = process.env.JWT_SECRET || "transfera-dev-secret";
@@ -17,6 +18,16 @@ async function requireAuth(req, res, next) {
 
     const token = authHeader.slice(7);
     const decoded = jwt.verify(token, JWT_SECRET);
+    const tokenId = decoded.jti || null;
+
+    if (tokenId) {
+      const blacklistedInRedis = await getValue(getBlacklistKey(tokenId));
+      if (blacklistedInRedis) {
+        return res.status(401).json({
+          message: "Oturum gecersiz veya sonlandirildi.",
+        });
+      }
+    }
 
     if (!isDatabaseAvailable()) {
       req.auth = decoded;
@@ -28,17 +39,19 @@ async function requireAuth(req, res, next) {
       return next();
     }
 
-    const blacklistedToken = await TokenBlacklist.findOne({ token });
-    if (blacklistedToken) {
-      return res.status(401).json({
-        message: "Oturum geçersiz veya sonlandırılmış.",
-      });
+    if (!tokenId) {
+      const blacklistedToken = await TokenBlacklist.findOne({ token });
+      if (blacklistedToken) {
+        return res.status(401).json({
+          message: "Oturum gecersiz veya sonlandirildi.",
+        });
+      }
     }
 
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({
-        message: "Kullanıcı bulunamadı.",
+        message: "Kullanici bulunamadi.",
       });
     }
 
@@ -52,7 +65,7 @@ async function requireAuth(req, res, next) {
     next();
   } catch (error) {
     return res.status(401).json({
-      message: "Geçersiz token.",
+      message: "Gecersiz token.",
       error: error.message,
     });
   }
@@ -64,7 +77,7 @@ function requireSelfOrAdmin(req, res, next) {
   }
 
   return res.status(403).json({
-    message: "Bu işlem için yetkiniz yok.",
+    message: "Bu islem icin yetkiniz yok.",
   });
 }
 
@@ -74,7 +87,7 @@ function requireAdmin(req, res, next) {
   }
 
   return res.status(403).json({
-    message: "Bu işlem sadece yetkili kullanıcılar için açıktır.",
+    message: "Bu islem sadece yetkili kullanicilar icin aciktir.",
   });
 }
 

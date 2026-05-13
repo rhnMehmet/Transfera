@@ -37,6 +37,40 @@ export function getInitials(name = "") {
     .join("");
 }
 
+function isValidEntityImage(value) {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized || normalized === "null" || normalized === "undefined") {
+    return false;
+  }
+
+  const lowered = normalized.toLowerCase();
+  const blockedPatterns = [
+    "placeholder",
+    "default-player",
+    "default_player",
+    "no-image",
+    "no_image",
+    "missing-image",
+  ];
+
+  return !blockedPatterns.some((pattern) => lowered.includes(pattern));
+}
+
 export function getEntityImage(entity) {
-  return entity?.imagePath || entity?.image_path || null;
+  const candidates = [
+    entity?.imagePath,
+    entity?.image_path,
+    entity?.photoPath,
+    entity?.photo_path,
+    entity?.avatar,
+    entity?.logoPath,
+    entity?.logo_path,
+  ];
+
+  return candidates.find(isValidEntityImage) || null;
 }

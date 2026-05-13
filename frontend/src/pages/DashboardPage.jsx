@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, {
   fetchLeaguePlayers,
   fetchLeagueTeams,
+  getCurrentUserId,
   resolvePlayerById,
   resolveTeamById,
   storage,
@@ -37,6 +38,10 @@ const LEAGUE_ROUTE_MAP = {
   "Ligue 1": "ligue-1",
 };
 
+const DEFAULT_PLAYER_ID = 6983809;
+const DEFAULT_SOURCE_LEAGUE = "Bundesliga";
+const DEFAULT_TARGET_LEAGUE = "Premier League";
+
 function formatContractPressure(value) {
   if (value === "high") {
     return "Yüksek";
@@ -50,31 +55,29 @@ function formatContractPressure(value) {
   return "Bilinmiyor";
 }
 
-function formatMillionValue(value) {
-  const numeric = Number(value);
+function normalizeSearch(value) {
+  return String(value || "").toLocaleLowerCase("tr");
+}
 
-  if (!Number.isFinite(numeric)) {
-    return "-";
-  }
-
-  return `${numeric.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1")} M EUR`;
+function includesSearch(value, query) {
+  return normalizeSearch(value).includes(query);
 }
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [data, setData] = useState(initialState);
   const [profile, setProfile] = useState(storage.getUser());
-  const [selectedPlayerId, setSelectedPlayerId] = useState(6983809);
-  const [selectedLeague, setSelectedLeague] = useState("Premier League");
-  const [aiSourceLeague, setAiSourceLeague] = useState("Premier League");
+  const [selectedPlayerId, setSelectedPlayerId] = useState(DEFAULT_PLAYER_ID);
+  const [selectedLeague, setSelectedLeague] = useState(DEFAULT_SOURCE_LEAGUE);
+  const [aiSourceLeague, setAiSourceLeague] = useState(DEFAULT_SOURCE_LEAGUE);
   const [teamSearch, setTeamSearch] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loadingBase, setLoadingBase] = useState(true);
   const [loadingLeagueData, setLoadingLeagueData] = useState(true);
   const [loadingPrediction, setLoadingPrediction] = useState(true);
-  const [loadingAiPlayers, setLoadingAiPlayers] = useState(true);
+  const [loadingAiPlayers, setLoadingAiPlayers] = useState(false);
   const [favoriteTeamLoadingId, setFavoriteTeamLoadingId] = useState(null);
-  const [aiTargetLeague, setAiTargetLeague] = useState("Premier League");
+  const [aiTargetLeague, setAiTargetLeague] = useState(DEFAULT_TARGET_LEAGUE);
   const [aiTargetTeamId, setAiTargetTeamId] = useState("");
   const [aiTargetTeams, setAiTargetTeams] = useState([]);
   const [aiPlayers, setAiPlayers] = useState([]);
@@ -273,7 +276,7 @@ export default function DashboardPage() {
     }
 
     loadAiPlayers();
-  }, [aiSourceLeague]);
+  }, [aiSourceLeague, openAiPicker]);
 
   useEffect(() => {
     async function loadAiTargetTeams() {
@@ -337,8 +340,15 @@ export default function DashboardPage() {
   }
 
   async function handleToggleFavoriteTeam(team) {
+    const profileId = getCurrentUserId(profile);
     const teamId = team.id;
     const currentlyFavorite = isFavoriteTeam(teamId);
+
+    if (!profileId) {
+      setFeedback("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      navigate("/login", { replace: true });
+      return;
+    }
 
     setFavoriteTeamLoadingId(teamId);
     setData((current) => ({
@@ -352,10 +362,10 @@ export default function DashboardPage() {
 
     try {
       if (currentlyFavorite) {
-        await api.delete(`/users/${profile.id}/favorites/teams/${teamId}`);
+        await api.delete(`/users/${profileId}/favorites/teams/${teamId}`);
         setFeedback("Takım favorilerden çıkarıldı.");
       } else {
-        await api.post(`/users/${profile.id}/favorites/teams`, { teamId });
+        await api.post(`/users/${profileId}/favorites/teams`, { teamId });
         setFeedback("Takım favorilere eklendi.");
       }
 
@@ -383,8 +393,11 @@ export default function DashboardPage() {
   }
 
   async function handleLogout() {
-    await logoutUser();
-    navigate("/login");
+    try {
+      await logoutUser();
+    } finally {
+      window.location.replace("/login");
+    }
   }
 
   const filteredTeams = data.teams.filter((team) =>
@@ -397,14 +410,33 @@ export default function DashboardPage() {
   const selectedAiTargetTeam = aiTargetTeams.find(
     (team) => String(team.id) === String(aiTargetTeamId)
   );
-  const visibleAiPlayers = aiPlayers
-    .filter((player) =>
-      player.name.toLowerCase().includes(aiPlayerSearch.toLowerCase())
+  const playerSearchQuery = normalizeSearch(aiPlayerSearch.trim());
+  const targetTeamSearchQuery = normalizeSearch(aiTargetTeamSearch.trim());
+  const visibleAiPlayers = aiPlayers.filter((player) => {
+    if (!playerSearchQuery) {
+      return true;
+    }
+
+    return (
+      includesSearch(player.name, playerSearchQuery) ||
+      includesSearch(player.teamName, playerSearchQuery) ||
+      includesSearch(player.team?.name, playerSearchQuery) ||
+      includesSearch(player.leagueName, playerSearchQuery) ||
+      includesSearch(player.league, playerSearchQuery) ||
+      includesSearch(player.position, playerSearchQuery)
     );
-  const visibleAiTargetTeams = aiTargetTeams
-    .filter((team) =>
-      team.name.toLowerCase().includes(aiTargetTeamSearch.toLowerCase())
+  });
+  const visibleAiTargetTeams = aiTargetTeams.filter((team) => {
+    if (!targetTeamSearchQuery) {
+      return true;
+    }
+
+    return (
+      includesSearch(team.name, targetTeamSearchQuery) ||
+      includesSearch(team.league, targetTeamSearchQuery) ||
+      includesSearch(team.country, targetTeamSearchQuery)
     );
+  });
   const favoriteCount = data.favoriteTeams.length + data.favoritePlayers.length;
 
   return (

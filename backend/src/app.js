@@ -13,30 +13,54 @@ const transferRoutes = require("./routes/transferRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const { isDatabaseAvailable } = require("./utils/database");
+const { ensureDevAdmin } = require("./services/devAdminSeed");
+const { ensureRedisConnection, isRedisAvailable } = require("./services/redisClient");
+const {
+  ensureRabbitConnection,
+  isRabbitAvailable,
+  startDomainEventConsumers,
+} = require("./services/rabbitMq");
+const { processDomainEvent } = require("./services/domainEventProcessor");
+const { ensureDatabaseConnection, isDatabaseAvailable } = require("./utils/database");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  process.env.MONGO_URI ||
-  "mongodb://127.0.0.1:27017/transfera";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const MONGODB_SERVER_SELECTION_TIMEOUT_MS = Number(
-  process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000
-);
+
+function isLocalDevOrigin(origin) {
+  if (!origin) {
+    return false;
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return true;
+  }
+
+  if ((process.env.NODE_ENV || "development") !== "production" && isLocalDevOrigin(origin)) {
+    return true;
+  }
+
+  return false;
+}
+
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 const hasFrontendBuild = fs.existsSync(frontendDistPath);
-
-let databaseConnectionPromise = null;
 
 app.use( 
   cors({
     origin(origin, callback) {
-      if (!origin || !ALLOWED_ORIGINS.length || ALLOWED_ORIGINS.includes(origin)) {
+      if (!origin || !ALLOWED_ORIGINS.length || isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
@@ -47,17 +71,46 @@ app.use(
 
 app.use(express.json());
 
+app.use(
+  [
+    "/users",
+    "/players",
+    "/teams",
+    "/transfers",
+    "/ai",
+    "/admin",
+    "/api/players",
+    "/api/teams",
+    "/api/comments",
+  ],
+  async (req, res, next) => {
+    try {
+      await ensureDatabaseConnection();
+    } catch (error) {
+      console.error("MongoDB baglantisi kurulamadi:", error.message);
+    }
+
+    next();
+  }
+);
+
 function buildHealthPayload() {
   return {
     name: "TRANSFERA API",
     status: isDatabaseAvailable() ? "ok" : "degraded",
     version: "1.0.0",
     database: isDatabaseAvailable() ? "connected" : "disconnected",
+    redis: isRedisAvailable() ? "connected" : "disconnected",
+    rabbitmq: isRabbitAvailable() ? "connected" : "disconnected",
   };
 }
 
 app.get("/api/health", async (req, res) => {
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+  } catch (error) {
+    console.error("Health check sirasinda MongoDB baglantisi kurulamadi:", error.message);
+  }
   res.json(buildHealthPayload());
 });
 
@@ -84,7 +137,11 @@ app.get("/", async (req, res) => {
     return res.sendFile(path.join(frontendDistPath, "index.html"));
   }
 
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+  } catch (error) {
+    console.error("Root isteginde MongoDB baglantisi kurulamadi:", error.message);
+  }
   return res.json(buildHealthPayload());
 });
 
@@ -92,37 +149,25 @@ app.use((req, res) => {
   res.status(404).json({ message: "Endpoint bulunamadi." });
 });
 
-async function connectToDatabase() {
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-
-  if (databaseConnectionPromise) {
-    return databaseConnectionPromise;
-  }
-
-  try {
-    databaseConnectionPromise = mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: MONGODB_SERVER_SELECTION_TIMEOUT_MS,
-    });
-
-    await databaseConnectionPromise;
-    console.log("MongoDB baglandi.");
-  } catch (error) {
-    databaseConnectionPromise = null;
-    console.error(
-      "MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
-      error.message
-    );
-  }
-}
-
 async function startServer() {
   app.listen(PORT, () => {
     console.log(`Server calisiyor: http://localhost:${PORT}`);
   });
 
-  await connectToDatabase();
+  try {
+    await ensureDatabaseConnection();
+    await ensureDevAdmin();
+    console.log("MongoDB baglandi.");
+  } catch (error) {
+    console.error(
+      "MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
+      error.message
+    );
+  }
+
+  await ensureRedisConnection();
+  await ensureRabbitConnection();
+  await startDomainEventConsumers(processDomainEvent);
 }
 
 mongoose.connection.on("connected", () => {
@@ -137,7 +182,43 @@ mongoose.connection.on("error", (error) => {
   console.error("MongoDB hatasi:", error.message);
 });
 
-connectToDatabase();
+ensureDatabaseConnection().catch((error) => {
+  console.error(
+    "Ilk MongoDB baglantisi kurulamadi, sunucu sinirli modda calisiyor:",
+    error.message
+  );
+});
+
+ensureDatabaseConnection()
+  .then(() => ensureDevAdmin())
+  .catch((error) => {
+    console.error(
+      "Varsayilan gelistirme admin hesabi hazirlanamadi:",
+      error.message
+    );
+  });
+
+ensureRedisConnection().catch((error) => {
+  console.error(
+    "Ilk Redis baglantisi kurulamadi, cache ozellikleri sinirli modda calisiyor:",
+    error.message
+  );
+});
+
+ensureRabbitConnection()
+  .then((rabbit) => {
+    if (!rabbit) {
+      return null;
+    }
+
+    return startDomainEventConsumers(processDomainEvent);
+  })
+  .catch((error) => {
+    console.error(
+      "Ilk RabbitMQ baglantisi kurulamadi, event ozellikleri sinirli modda calisiyor:",
+      error.message
+    );
+  });
 
 if (require.main === module) {
   startServer();
