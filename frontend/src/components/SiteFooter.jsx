@@ -4,7 +4,9 @@ export default function SiteFooter() {
       <div className="site-footer-inner">
         <div className="site-footer-brand">
           <strong>TRANSFERA-MIOMA</strong>
-          <span>Copyright 2026</span>
+          <span className="site-footer-copyright">
+            ©2026 Transfera-Mioma. All rights reserved.
+          </span>
         </div>
 
         <p className="site-footer-copy">

@@ -1,5 +1,5 @@
 # Mehmet Orhan'nın Web Frontend Görevleri
-**Front-end Test Videosu:** [videom](https://www.youtube.com/watch?v=AKALTJPAcfY)
+**Front-end Test Videosu:** [videom](https://www.youtube.com/watch?v=yWrbGzaQZy8)
 
 ## 🔟 Kullanıcı Çıkışı (Logout)
 

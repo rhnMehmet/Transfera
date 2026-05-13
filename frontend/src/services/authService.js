@@ -2,16 +2,24 @@ import api, { normalizeStoredUser, storage } from "./api";
 
 export async function registerUser(payload) {
   const { data } = await api.post("/users/register", payload);
+  const normalizedUser = normalizeStoredUser(data.user);
   storage.setToken(data.token);
-  storage.setUser(data.user);
-  return data;
+  storage.setUser(normalizedUser);
+  return {
+    ...data,
+    user: normalizedUser,
+  };
 }
 
 export async function loginUser(payload) {
   const { data } = await api.post("/users/login", payload);
+  const normalizedUser = normalizeStoredUser(data.user);
   storage.setToken(data.token);
-  storage.setUser(data.user);
-  return data;
+  storage.setUser(normalizedUser);
+  return {
+    ...data,
+    user: normalizedUser,
+  };
 }
 
 export async function getProfile(userId) {
@@ -27,6 +35,8 @@ export async function getProfile(userId) {
 export async function logoutUser() {
   try {
     await api.post("/users/logout");
+  } catch {
+    // Arayüzde yönlendirme takılmasın diye yerel çıkışa devam et.
   } finally {
     storage.clearToken();
     storage.clearUser();

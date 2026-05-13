@@ -77,8 +77,11 @@ export default function CommentsCommunityPage() {
   }, []);
 
   async function handleLogout() {
-    await logoutUser();
-    navigate("/login");
+    try {
+      await logoutUser();
+    } finally {
+      window.location.replace("/login");
+    }
   }
 
   const visibleComments = useMemo(() => {

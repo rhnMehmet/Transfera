@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api, { storage } from "../services/api";
+import api, { getCurrentUserId, normalizeStoredUser, storage } from "../services/api";
 import { getProfile, logoutUser } from "../services/authService";
 
 export default function ProfilePage() {
@@ -96,11 +96,25 @@ export default function ProfilePage() {
 
   async function handleProfileUpdate(event) {
     event.preventDefault();
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setError("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      setFeedback("");
+      navigate("/login", { replace: true });
+      return;
+    }
 
     try {
-      const { data } = await api.put(`/users/${profile.id}`, profileForm);
-      storage.setUser(data.user);
-      setProfile(data.user);
+      const { data } = await api.put(`/users/${profileId}`, profileForm);
+      const updatedUser = normalizeStoredUser(data.user);
+      storage.setUser(updatedUser);
+      setProfile(updatedUser);
+      setProfileForm({
+        name: updatedUser?.name || "",
+        surname: updatedUser?.surname || "",
+        email: updatedUser?.email || "",
+      });
       setFeedback("Profil bilgileri güncellendi.");
       setError("");
     } catch (requestError) {
@@ -113,9 +127,17 @@ export default function ProfilePage() {
 
   async function handlePasswordChange(event) {
     event.preventDefault();
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setError("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      setFeedback("");
+      navigate("/login", { replace: true });
+      return;
+    }
 
     try {
-      await api.put(`/users/${profile.id}/password`, passwordForm);
+      await api.put(`/users/${profileId}/password`, passwordForm);
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
@@ -132,10 +154,18 @@ export default function ProfilePage() {
 
   async function handleNotificationUpdate(event) {
     event.preventDefault();
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setError("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      setFeedback("");
+      navigate("/login", { replace: true });
+      return;
+    }
 
     try {
       const { data } = await api.put(
-        `/users/${profile.id}/notifications`,
+        `/users/${profileId}/notifications`,
         notificationForm
       );
       const updatedUser = {
@@ -224,8 +254,17 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteAccount() {
+    const profileId = getCurrentUserId(profile);
+
+    if (!profileId) {
+      setError("Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yap.");
+      setFeedback("");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await api.delete(`/users/${profile.id}`);
+      await api.delete(`/users/${profileId}`);
       await logoutUser();
       navigate("/register", { replace: true });
     } catch (requestError) {
@@ -242,13 +281,21 @@ export default function ProfilePage() {
 
   return (
     <main className="dashboard-page">
-      <section className="dashboard-hero">
-        <div>
+      <section className="dashboard-hero profile-hero">
+        <div className="profile-hero-copy">
           <span className="eyebrow">PROFİL YÖNETİMİ</span>
-          <h1>Profilini ve yorumlarını yönet</h1>
-          <p>E-posta, şifre ve daha önce yazdığın yorumlar tek sayfada.</p>
+          <h1>Profil ve yorum merkezi</h1>
+          <p>Hesap bilgilerini, bildirim tercihlerini ve yorum geçmişini tek ekrandan yönet.</p>
         </div>
-        <div className="hero-actions">
+        <div className="profile-hero-side">
+          <div className="profile-hero-avatar">
+            {`${profile?.name?.[0] || "T"}${profile?.surname?.[0] || ""}`.toUpperCase()}
+          </div>
+          <div className="profile-hero-identity">
+            <span>Aktif profil</span>
+            <strong>{`${profile?.name || "Transfera"} ${profile?.surname || "Kullanıcısı"}`}</strong>
+            <small>{profile?.email || "E-posta bilgisi bekleniyor"}</small>
+          </div>
           <Link to="/dashboard" className="button-secondary">
             Dashboard&apos;a Dön
           </Link>
